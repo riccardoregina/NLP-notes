@@ -1,0 +1,209 @@
+\chapter{Recurrent Neural Networks}
+
+\begin{observation}{Reference}
+    Yoav Goldberg, Neural Network Methods for Natural Language Processing.
+    Part III, Chapters 13-17.
+\end{observation}
+
+The main problem of vanilla feed-forward neural networks is that they do not consider hierarchical patterns and positions, instead treating each input component as independent. Moreover, these networks allow only a fixed size for the input, not allowing a variable length. Convolutional Neural Networks (CNNs) capture word order of the context, yet limited to local patterns and hence does not relate words that are far apart in the input sequence. CNNs also allow a fixed size input. Recurrent Neural Networks (RNNs) allow representing arbitrarily sized sequential inputs in fixed-size vectors, while capturing structural patterns in the input.
+
+We will see RNNs as an abstraction: an interface for translating a sequence of inputs into a fixed sized output, that can then be plugged as components in larger networks.
+
+\begin{note}{CNNs}
+    Convolutional networks have been discussed in detail in another course. Here, we give just a note about naming. Since CNNs did arise from the computer vision setting, its concepts are recall images rather than linear sequences like text. However, these concepts can be well ported from 2D to 1D. For example, while it is common knowledge that images are made up of three channels (RGB), it can be not obvious for text. However, text can absolutely have different channels, such as the sequence of words, the sequence of the relative POS tags etc.
+\end{note}
+
+\section{The RNN abstraction}
+Let $\mathbf{x}_{i:j}$ be the sequence of vectors $\mathbf{x}_{i},\dots,\mathbf{x}_{j} \in \mathbb{R}^{d_{in}}$. A RNN takes an input sequence $\mathbf{x}_{1:n}$ and returns a single output vector $\mathbf{y}_{n}\in \mathbb{R}^{d_{out}}$:
+\[
+\mathbf{y}_{n}=\text{RNN}(\mathbf{x}_{1:n})
+\]
+This implicitly defines an output vector $\mathbf{y}_{i}$ for each subsequence $\mathbf{x}_{1:i}$. We denote with $\text{RNN}^{*}$ the function returning the sequence of output vectors $\mathbf{y}_{1:n}$:
+\[
+\begin{aligned}
+\mathbf{y}_{1:n}&=\text{RNN}^{*}(\mathbf{x}_{1:n}) \\
+\mathbf{y}_{i}&=\text{RNN}(\mathbf{x}_{1:i})
+\end{aligned}
+\]
+Then, the output vector $\mathbf{y}_{n}$ is used for further prediction. In fact, both CNNs and RNNs are used for feature extraction.
+
+The RNN function provides a framework for conditioning on the entire history $\mathbf{x}_{1:n}$ without the need of the Markov assumption, which is typical of traditional language models. In fact, RNN-based language models result in very good perplexity scores.
+
+More precisely, at each step, the RNN takes a new input vector $\mathbf{x}_{i}$ and a state vector $\mathbf{s}_{i-1}$, that contains information about the result of the previous step, and returns a new state vector $\mathbf{s}_{i}$ by means of a function $R$. Then, the state vector $\mathbf{s}_{i}$ is mapped to an output vector $\mathbf{y}_{i}$ using a simple deterministic function $O$.
+
+When building a RNN, as one would do with a feed-forward network, one has to specify the input dimension $d_{in}$, the output dimension $d_{out}$. The state dimension, instead, is a function of $d_{out}$ i.e. $f(d_{out})$. So, a RNN is defined in detail as:
+\[
+\begin{aligned}
+\text{RNN}^{*}(\mathbf{x}_{1:n};\mathbf{s}_{0})&=\mathbf{y}_{1:n} \\
+\mathbf{y}_{i}&=O(\mathbf{s}_{i}) \\
+\mathbf{s}_{i}&=R(\mathbf{s}_{i-1};\mathbf{x}_{i})
+\end{aligned}
+\]
+with $\mathbf{x}_{i}\in \mathbb{R}^{d_{in}}$, $\mathbf{y}_{i} \in \mathbb{R}^{d_{out}}$, $\mathbf{s}_{i}\in \mathbb{R}^{f(d_{out})}$. Note that the functions $O$, $R$ are fixed but their behavior is modified through the network parameters $\theta$, which are updated during training.
+
+Talking about training, it is important to say that RNNs are always placed inside a larger network and serve as a feature extractor. For this reason, the loss function depends on the downstream task. The only concern about training is hence how to build the computational graph of a RNN. This is fairly simple though: for finite input sequences, we can unroll the recursion into a computational sequence.
+
+\section{Common RNN usage patterns}
+As we already said, RNNs are used as feature extractors inside larger networks. Now, we will see the common patterns that are followed to integrate a RNN inside a more complex network.
+
+\subsection{Acceptor}
+One option is to use only the last output vector $\mathbf{y}_{n}$ as a pattern signal. This is a simple yet powerful use of RNNs since $\mathbf{y}_{n}$ depends on the entire input sequence $\mathbf{x}_{1:n}$.
+
+\begin{example}{}
+For example, this pattern can be used for POS-tagging, next-word prediction etc.
+\end{example}
+
+\subsection{Encoder}
+Another way of using a RNN is to consider the output $\mathbf{y}_{n}$ as an encoding of the entire sequence $\mathbf{x}_{1:n}$. This encoding is then used as additional information together with other signals.
+
+\subsection{Transducer}
+We can treat the RNN as a transducer, producing an output $\mathbf{y}_{i}=\hat{\mathbf{t}}_{i}$ for each input $\mathbf{x}_{i}$ it reads in. In this way, we can compute a local loss signal $L_{\text{local}}(\hat{\mathbf{t}}_{i}, \mathbf{t}_{i})$ for each of the outputs $\hat{\mathbf{t}}_{i}$ based on a true label $\mathbf{t}_{i}$. The loss for the unrolled sequence will then be
+\[
+L(\hat{\mathbf{t}}_{1:n}, \mathbf{t}_{1:n})=\sum_{i=1}^{n}L_{\text{local}}(\hat{\mathbf{t}}_{i}, \mathbf{t}_{i})
+\]
+or using another combination of the local losses such as average or weighted average.
+
+A very natural use-case of the transduction setup is for language modeling, in which a sequence of words $\mathbf{x}_{1:i}$ is used to predict a distribution over the $(i+1)$-th word. RNN-based language models provide vastly better perplexities than traditional language models, as already mentioned.
+
+\section{Bi-directional RNNs (biRNNs)}
+A RNN allows to condition the word $\mathbf{x}_{i}$ on the entire preceding word sequence $\mathbf{x}_{1:i-1}$. However, we have seen that also the following words $\mathbf{x}_{i+1:n}$ can be useful for prediction.
+
+To do this, we use two RNNs: a forward RNN and a backward one. The forward $\text{RNN}(R^f, O^f)$ is fed with the word sequence $\mathbf{x}_{1:n}$ while the backward $\text{RNN}(R^b, O^b)$ with the reversed sequence $\mathbf{x}_{n:1}$. The two RNNs maintain, respectively, a forward state $\mathbf{s}^f_{i}$ and a backward state $\mathbf{s}^{b}_{i}$.
+At each step, the two RNNs calculate, respectively, $\mathbf{y}^f_{i}=O^f(\mathbf{s}^f_{i})$ and $\mathbf{y}^b_{i}=O^b(\mathbf{s}^b_{i})$. The output of the $\text{biRNN}$ is the concatenation of the two output vectors. So,
+\[
+\begin{aligned}
+\mathbf{y}_{i}&=[\mathbf{y}^f_{i};\mathbf{y}^b_{i}] \\
+\mathbf{y}^f_{i}=O^f&(\mathbf{s}^f_{i}),\:\mathbf{y}^b_{i}=O^b(\mathbf{s}^b_{i}) \\
+\mathbf{s}_{i}^f=R^f(\mathbf{s}^f_{i-1};\mathbf{x}_{i}&),\:\mathbf{s}_{i}^b=R^b(\mathbf{s}^b_{i-1};\mathbf{x}_{n+1-i})
+\end{aligned}
+\]
+
+\section{Multi-layer (stacked) RNNs}
+Since a RNN is a feature extractor, we can stack $k$ RNNs to extract "more features".
+
+\begin{note}
+While it is not theoretically clear what is the additional power gained by the deeper architecture of stacked RNNs, it was observed empirically that they work better than shallower ones on some tasks.
+\end{note}
+
+In a multi-layer RNN, $k$ RNNs are stack one on top of another so that the first RNN will take as input the sequence $\mathbf{x}_{1:n}$, the second RNN will take as input the output sequence of the first RNN and so on.
+
+\begin{observation}{}
+biRNNs can be stacked in a similar fashion.
+\end{observation}
+
+\section{RNN implementations}
+We have previously described formally what a RNN is, but have not provided any implementation of the two functions $R$, $O$, which we are going to do now.
+
+\subsection{Simple-RNN (S-RNN)}
+Presented by Elman (1990) and then further explored by Mikolov (2012), the S-RNN is implemented as:
+\[
+\begin{aligned}
+\mathbf{s}_{i}&=R(\mathbf{s}_{i-1};\mathbf{x}_{i})=g([\mathbf{s}_{i-1};\mathbf{x}_{i}]\cdot \mathbf{W} + \mathbf{b}) \\
+\mathbf{y}_{i}&=O(\mathbf{s}_{i})=\mathbf{s}_{i}
+\end{aligned}
+\]
+where $\mathbf{W}$ and $\mathbf{b}$ are learnable parameters.
+
+Another variant, introduced by Jordan, makes $\mathbf{s}_{i}$ dependent directly on the preceding output $\mathbf{y}_{i-1}$ rather than $\mathbf{s}_{i-1}$.
+
+\subsection{Gated architectures}
+S-RNNs are difficult to train because of vanishing gradients: early input signals do not reach the final output because of the chain of products between $\mathbf{x}_{i}$ and $\mathbf{W}$. This is both a numerical limitation and a functional limitation: null gradients make it difficult to minimize the loss function and early signals that get lost in the process limit the conditioning window of the model.
+
+To avoid this, we must find a way to preserve early input signals that are crucial. At the moment, the state vector $\mathbf{s}_{i}$ gets overwritten, without control, during the compute of $\mathbf{s}_{i+1}=R(\mathbf{s}_{i};\mathbf{x}_{i+1})$. We must therefore control this state update.
+
+We can achieve this by introducing an access gate vector $\mathbf{g}\in\{0,1\}^{d_{in}}$ s.t. $R$ can only modify the state vector components $s_{j}$ s.t. $g_{j}=1$. We can implement this with a simple element-wise multiplication, also called hadamard-product:
+\[
+\mathbf{s}_{i+1}=\mathbf{x}_{i+1}\odot\mathbf{g} + \mathbf{s}_{i}\odot (1-\mathbf{g})
+\]
+Moreover, we want these gates to be learnable and so this calculation differentiable to allow gradient descent. We can then relax the hard gate constraint by allowing any real value and then apply a sigmoid function to force the value to be inside between $0$ and $1$, i.e. $\mathbf{g}\in (0,1)^{d_{in}}$.
+
+\subsection{LSTM}
+The Long Short-Term Memory (LSTM) architecture splits the state vector into two halves, where one half is treated as "memory cells" and the other as working memory. The memory cells are designed to preserve the memory across time and are controlled by \textbf{differentiable gating components}, smooth mathematical functions that simulate logical gates. The LSTM is formally defined as:
+\[
+\begin{aligned}
+\mathbf{s}_{j}&=R(\mathbf{s}_{j-1}, \mathbf{x}_{j})=[\mathbf{c}_{j};\mathbf{h}_{j}] \\
+\mathbf{y}_{j}&=O(\mathbf{s}_{j})=\mathbf{h}_{j}
+\end{aligned}
+\]
+with:
+\[
+\begin{aligned}
+\mathbf{c}_{j}&=\mathbf{f} \odot \mathbf{c}_{j-1} + \mathbf{i} \odot \mathbf{z} \\
+\mathbf{h}_{j}&=\mathbf{o} \odot \tanh(\mathbf{c}_{j}) \\
+\mathbf{i}&=\sigma(\mathbf{x}_{j}\mathbf{W}^{xi} + \mathbf{h}_{j-1}\mathbf{W}^{hi}) \\
+\mathbf{f}&=\sigma(\mathbf{x}_{j}\mathbf{W}^{xf} + \mathbf{h}_{j-1}\mathbf{W}^{hf}) \\
+\mathbf{o}&=\sigma(\mathbf{x}_{j}\mathbf{W}^{xo} + \mathbf{h}_{j-1}\mathbf{W}^{ho}) \\
+\mathbf{z}&=\tanh(\mathbf{x}_{j}\mathbf{W}^{xz} + \mathbf{h}_{j-1}\mathbf{W}^{hz})
+\end{aligned}
+\]
+where $\mathbf{c}_{j}$ is the new value of the "memory cells", $\mathbf{i}$ is the input gate, $\mathbf{f}$ is the forget gate, $\mathbf{o}$ is the output gate, $\mathbf{z}$ is the input candidate to overwrite the "memory cells".
+
+\section{Generating with RNNs}
+We have seen that the RNN-transducer can be used for language modeling. A special case of language modeling is sequence generation, where the model creates a sequence of words, either from scratch or from an initial sequence (prompt).
+
+At time $i$, after predicting the distribution $\Pr(t_{i}=k|t_{1:i-1})$, a token $t_{i}$ is chosen and its corresponding embedding vector is fed as the input to the next step. The process stops when generating a special end-of-sequence symbol, often denoted as \texttt{</s>}. As we already mentioned in a previous chapter, choosing the next most probable token does not necessarily lead to the most probable sentence. In fact, we could also use beam-search.
+
+\begin{observation}{Language models at character level}
+An impressive demonstration of the ability of gated RNN to condition on arbitrarily long histories is through a \textbf{RNN-based language model} that is \textbf{trained on characters rather than on words}. When used as a generator, the trained RNN language model is tasked with generating random sentences character by character, each character conditioning on the previous ones (Sutskever et al., 2011). Working on the character level forces the model to look further back into the sequence in order to connect letters to words and words to sentences, and to form meaningful patterns. The generated texts not only resemble fluent English, but also show sensitivity to properties that are not captured by ngram language models, including line lengths and nested parenthesis balancing. When trained on C source code, the generated sequences adhere to indentation patterns, and the general syntactic constraints of the C language. For an interesting demonstration and analysis of the properties of RNN-based character level language models, see Karpathy et al. (2015).
+\end{observation}
+
+\subsection{Training}
+When training a generator, the common approach is to simply train it as a transducer that aims to put a large probability mass on the next token of the gold sequence, that is the sequence used for training. This training approach is often called \textbf{teacher-forcing}, as the generator is fed the gold word even if it put on it a very small probability mass.
+
+This training modality is called teacher-forcing because it resembles the case when the student is pushed towards the correct answer even if he/she answered incorrectly. In this way, the teacher cannot really evaluate the student's understanding. Moreover, this way of teaching is even harmful for the student as he/she, at the time of a real test, is not going to have this help.
+
+Similarly, a language model trained with this method would not behave well when diverging from the gold sequence. As of this writing, coping with these situations is still an open research question (2017).
+
+\subsection{Conditioned generation}
+While using a RNN-based language model as a generator is a useful example of its power, it is not very useful. In fact, for a generator to really come in handy as a chatbot, we should move to a conditioned generation framework, where the next token $\hat{\mathbf{t}}_{i+1}$ is generated not only on the base of the previous ones $\hat{\mathbf{t}}_{1:i}$, but also of a context $\mathbf{c}$.
+
+Formally, such a model would calculate the probability
+\[
+\Pr(\mathbf{t}_{i+1}|\hat{\mathbf{t}}_{1:i}, \mathbf{c}).
+\]
+A RNN-based conditioned generator is defined (recursively) as:
+\[
+\begin{aligned}
+\Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:i}, \mathbf{c}) &= f(O(\mathbf{s}_{i+1})) \\
+\mathbf{s}_{i+1}&=R(\mathbf{s}_{i}, [\mathbf{\hat{\mathbf{t}}}_{i};\mathbf{c}]) \\
+\hat{\mathbf{t}}_{i} &\sim \Pr(\mathbf{t}_{i}|\hat{\mathbf{t}}_{1:i-1}, \mathbf{c})
+\end{aligned}
+\]
+where $f$ is a function that maps the output $O(\mathbf{s}_{i+1})$ to a distribution over the words.
+
+The context $\mathbf{c}$ could contain any encoded information that we can put our hands on during training, and that we find useful. For example, if we have a large corpus of news articles categorized into different topics, we can treat the topic as a conditioning context. Our language model will then be able to generate texts conditioned on the topic.
+
+Another popular approach takes $\mathbf{c}$ to be itself a text sequence. This gives rise to the \textbf{sequence to sequence} conditioned generation framework, also called the \textbf{encoder-decoder} framework.
+
+In this setting, we have a source sequence $\mathbf{x}_{1:n}$ and we are interested in generating a target output sequence $\mathbf{t}_{1:m}$. For example, we want to translate a sentence in English to a sentence in Italian. This works by encoding the source sentence $\mathbf{x}_{1:n}$ into a vector $\mathbf{c}=\text{ENC}(\mathbf{x}_{1:n})$ using an \textbf{encoder} (e.g. $\text{ENC}=\text{RNN}$), and then use a conditioned generator to generate the desired output $\mathbf{t}_{1:m}=\text{GEN}(\mathbf{c})$ (e.g. using a conditioned RNN transducer).
+
+The encoder and decoder are trained jointly and the supervision happens only for the decoder, but the gradients are propagated back to the encoder and the parameters of both are updated.
+
+\begin{note}
+Contexts may also be non-text. In fact, it is usual to use the encoder-decoder framework for image captioning: an image is encoded by, say, a convolutional network into the vector $\mathbf{c}$, that is then used as the context for a conditioned text generator.
+\end{note}
+
+\section{Introducing attention}
+In the encoder-decoder architecture, the encoder learns to extract all (most of) the required information for generation. This architecture works surprisingly well, but works even better with the addition of an attention mechanism.
+
+The conditioned generation with attention (Bahdanau et al., 2014) relaxes the condition that the entire sentence must be encoded into a single vector. Instead, the input sentence $\mathbf{x}_{1:n}$ is encoded into a sequence of vectors $\mathbf{c}_{1:n}$ and the decoder uses a \textbf{soft attention mechanism} to decide on which parts of the encoding input it should focus. The encoder, decoder, and attention mechanism are all trained jointly.
+
+This architecture can be, for example, built by using a biRNN to produce the context,
+\[
+\mathbf{c}_{1:n}=\text{ENC}(\mathbf{x}_{1:n})=\text{biRNN}^*(\mathbf{x}_{1:n})
+\]
+followed by an attention mechanism and then a RNN-based conditioned generator as decoder. The complete architecture is then formally (recursively) defined as:
+\[
+\begin{aligned}
+\Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:j},\mathbf{x}_{1:n})&=f(O(\mathbf{s}_{j+1})) \\
+\mathbf{s}_{j+1}&=R(\mathbf{s}_{j}, [\hat{\mathbf{t}}_{j};\mathbf{c}^j]) \\
+\mathbf{c}^j&=\text{attend}(\mathbf{c}_{1:n}, \hat{\mathbf{t}}_{1:j}) \\
+\hat{\mathbf{t}}_{j} &\sim \Pr(\mathbf{t}_{j}|\hat{\mathbf{t}}_{1:j-1}, \mathbf{x}_{1:n})
+\end{aligned}
+\]
+
+\begin{note}
+We write $\Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:j},\mathbf{x}_{1:n})$ and not $\Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:j},\mathbf{c}^{j})$, as one would naturally write according to the formal definition of a RNN-based conditioned generator, because this probability already depends on the attentioned context $\mathbf{c}^j$ in the step of calculating the new state vector $\mathbf{s}_{j+1}$.
+\end{note}
+
+Finally, using an attention mechanism allows us to interpret the model encodings by just inspecting the relative parameters.

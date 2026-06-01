@@ -1,0 +1,111 @@
+\chapter{Features}
+
+\begin{observation}{Reference}
+    Yoav Goldberg, Neural Network Methods for Natural Language Processing.
+    Part II, Chapter 6.
+\end{observation}
+
+In language processing, feature vectors $\mathbf{x}$ are derived from textual data, in order to reflect various linguistic properties of the text. This process of derivation is called \textbf{feature extraction} and is done by a feature function $f$.
+
+Deciding on the right features is a fundamental part of a successful machine learning project. \textbf{While deep learning alleviates a lot of the need for feature engineering, a set of core features still needs to be defined.}
+
+\section{Types of Classification Problems in NLP}
+In NLP, there are several types of classification problems, each depending on the type of input:
+
+\begin{itemize}
+    \item \textbf{Word}: We are faced with a word and need to determine something about it. This kind of problem is rare as words seldom appear in isolation.
+    \item \textbf{Texts}: We are faced with a piece of text, such as a phrase, sentence, paragraph, or document, and must determine something about it. This is called \textbf{document classification}.
+    \item \textbf{Paired Texts}: We are given a pair of words or longer texts and need to determine something about the relations between them.
+    \item \textbf{Word in Context}: We are given a piece of text and a particular word (or phrase, letter, etc.), and need to determine something about the word in that context.
+    \item \textbf{Relation Between Two Words}: We are given two words or phrases within a larger context and need to determine something about the relations between them.
+\end{itemize}
+
+\begin{quote}
+    \textbf{Definition:} A \textbf{word} is the smallest unit of meaning, e.g., \textit{New York}, \textit{forgets}. In general, we distinguish between words and tokens. A \textbf{token} is the output of a tokenizer and can be a single word, multiple words, or part of a word. However, we will often use \textit{word} and \textit{token} as synonyms.
+\end{quote}
+
+\section{Features for NLP}
+As words and letters are discrete items, features in NLP often take the form of indicators or counts. An \textbf{indicator feature} takes a value $0$ or $1$ depending on the existence of a condition (e.g., the word \textit{dog} is present). A \textbf{count} takes a value depending on the number of occurrences of some event (e.g., the word \textit{dog} appears 20 times in the document).
+
+\subsection{Directly Observable Properties}
+We list some properties that we can observe directly from the input, depending on the input type.
+
+\subsubsection{Single Words}
+When we only have a word, without any context, our main source of information is the letters comprising the word and their order, including things like prefixes, suffixes, capital letters, and numbers. We could also look at external sources of information to see how many times that word appears in collections of texts.
+
+\begin{itemize}
+    \item \textbf{Lemmas and Stems}: Given a single word or a word with a very limited context, we could look at its \textbf{lemma}, the dictionary entry (e.g., \textit{booking}, \textit{booked}, \textit{books} will all be reduced to \textit{book}). Lemmatization may not work well with misspelled words. A coarser process than lemmatization, which can work with any sequence of letters, is called \textbf{stemming}. Its product is not necessarily a valid word (e.g., \textit{picture}, \textit{pictures}, \textit{pictured} will all be reduced to the stem \textit{pictur}).
+
+    \item \textbf{Lexical Resources}: An additional source of information is \textbf{lexical resources}, which are essentially dictionaries meant to be accessed programmatically. They map words to other words or descriptions, providing additional information (e.g., a word may be linked with all its possible meanings, declensions, synonyms, etc.). Examples include WordNet (1998), FrameNet (2004), VerbNet (2000), and The Paraphrase Database (2013). Lexical resources are not used in neural network approaches, but this may change.
+
+    \item \textbf{Distributional Information}: To understand the meaning of a word, we may look at words that behave similarly, i.e., their distributions and typical contexts. This property is complex and will be discussed in depth later.
+\end{itemize}
+
+\subsubsection{Features for Text}
+When dealing with a text, we typically count its words and look at their order.
+
+\begin{itemize}
+    \item \textbf{Bag of Words (BOW)}: We look at the histogram of words within the text, considering each word count as a feature.
+    \item \textbf{Weighting}: We can integrate statistics based on external information, focusing on words that appear many times in the given text but few times in a set of external documents. This highlights words characteristic of the text. When using the bag-of-words approach, it is common to use TF-IDF.
+\end{itemize}
+
+\subsubsection{Features of Words in Context}
+When considering a word within a sentence, phrase, or document, the directly observable features of the word are its position and the words or letters surrounding it. Words closer to the target tend to be more informative, but distant words may also influence the target (e.g., in Latin, verbs are typically at the end of a phrase, far from the subject).
+
+\begin{itemize}
+    \item \textbf{Windows}: It is common to focus on the immediate context of a word by considering a \textbf{window} surrounding it, i.e., $k$ words on each side, where typical values for $k$ are $2, 5, 10$. A window can be seen as a smaller bag of words. Since it is smaller, we may also consider the positions of words within it, which can provide useful information. We take the identity of words as features, e.g., for \textit{the brown fox \textbf{jumped} over the lazy dog}, the set of features is $\{w_{-2}=\text{brown}, w_{-1}=\text{fox}, w_{+1}=\text{over}, w_{+2}=\text{the}\}$.
+
+    \item \textbf{Position}: Besides the context of the word, we may be interested in its absolute position within a sentence.
+\end{itemize}
+
+\subsubsection{Features for Word Relations}
+When considering two words in context, besides their position and the words surrounding them, we can also look at the words between them and the distance between the two words.
+
+\subsection{Inferred Properties}
+Sentences in natural language have structures beyond the linear order of their words. This structure follows an intricate set of rules that are not directly observable. These rules are collectively referred to as \textbf{syntax}.
+
+While the exact structure of language is still a mystery, a subset of phenomena governing language are well-documented and understood. Besides observable properties, we can look at inferred linguistic properties, such as:
+\begin{itemize}
+    \item The \textbf{part-of-speech (POS)} of a word within a text (e.g., noun, verb, adjective, determiner).
+    \item The \textbf{syntactic role} of a word (e.g., subject, object of a verb, main verb).
+    \item The \textbf{semantic role} of a word (e.g., in \textit{the key opened the door}, \textit{key} is an instrument, while in \textit{the uncle opened the door}, \textit{uncle} is an agent).
+\end{itemize}
+
+When considering two words in context, we can consider how close they are in the syntactic dependency tree of the sentence.
+
+When moving beyond sentences, i.e., when studying relations between sentences rather than within them, we may want to understand whether the second sentence is an elaboration, contradiction, or effect of the first. Additionally, in natural language, we observe the phenomenon of \textbf{anaphora}. For example, in \textit{The boy opened the door with a key. He would have been happier if it was already open.}, \textit{He} refers to \textit{The boy}, while \textit{it} refers to \textit{the door}, not \textit{the key}.
+
+Many deep learning experts argue that using manually crafted linguistic concepts is unnecessary, as neural networks can learn them on their own. However, some studies show that these concepts are still valuable in certain stages of a machine learning approach.
+
+\subsection{Core vs. Combination Features}
+In many cases, we are interested in a \textbf{conjunction of features} rather than individual ones. For example, the indicators \textit{the word `book' appeared in a window} and \textit{POS=verb appeared in a window} are useless alone but meaningful when combined. The combined indicator \textit{the word `book' with POS=verb appeared in a window} is much more informative about the meaning of the sentence.
+
+However, linear models cannot assign a score to a conjunction of events that is not a sum of their individual scores unless the conjunction itself is modeled as its own feature. Thus, when designing features for a linear model, we must define not only the core features but also many combination features.
+
+Neural networks do not suffer from this problem. If we use neural networks, we can specify only the core features and rely on the network's non-linearity. However, in some cases, neural networks do not surpass linear models with hand-crafted features.
+
+\subsection{Ngrams}
+A special case of feature combination is \textbf{ngrams}, consecutive word sequences of length $n$. A bag-of-bigrams representation is more powerful than bag-of-words because it can capture bigrams like \textit{New York} or \textit{not good}.
+
+A priori, it is hard to know the optimal value for $n$. The common solution is to include all ngrams up to a given length and let the model's regularization discard the less interesting ones by assigning them very low weights.
+
+However, a multi-layer perceptron (MLP) fed with a BOW input vector cannot infer ngram features on its own because a BOW vector does not provide positional information, and vanilla MLPs do not capture positional patterns.
+
+To provide positional information, we can feed our MLP with an input vector that includes features like $w_{-2}=X$, $w_{-1}=Y$.
+
+More specialized neural network architectures, such as \textbf{convolutional networks} and \textbf{recurrent networks}, are designed to find informative ngram features from sequences of words of varying lengths.
+
+\subsection{Distributional Features}
+Until now, our treatment of words has been as discrete and unrelated symbols: the words \textit{pizza}, \textit{burger}, and \textit{chair} are equally similar (and dissimilar) to each other. We achieved some generalization by considering POS, lemmas, stems, dictionaries, and lexical resources like WordNet, but these solutions are limited. They either provide very coarse-grained distinctions or rely on specific, manually compiled dictionaries.
+
+Unless we have a specialized list of foods, we will not learn that \textit{pizza} is more similar to \textit{burger} than to \textit{chair}, and it will be even harder to learn that \textit{pizza} is more similar to \textit{burger} than to \textit{ice cream}.
+
+The \textbf{distributional hypothesis of language} states that the meaning of a word can be inferred from the contexts in which it is used. By observing co-occurrence patterns of words across a large body of text, we can discover that the contexts in which \textit{burger} occurs are similar to those in which \textit{pizza} occurs, less similar to those in which \textit{ice cream} occurs, and very different from those in which \textit{chair} occurs.
+
+Many algorithms have been developed over the years to leverage this property, learning generalizations of words based on their contexts. These can be broadly categorized into:
+\begin{itemize}
+    \item \textbf{Clustering-based methods}: Assign similar words to the same cluster and represent each word by its cluster membership.
+    \item \textbf{Embedding-based methods}: Represent each word as a vector such that similar words (words with similar distributions) have similar vectors.
+\end{itemize}
+
+However, care must be taken when using word similarity information, as it can have unintended consequences. For example, in some applications, it is useful to treat \textit{London} and \textit{Berlin} as similar, while in others (e.g., booking a flight or translating a document), the distinction is crucial.

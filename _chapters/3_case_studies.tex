@@ -1,0 +1,60 @@
+\chapter{Case Studies}
+
+\begin{observation}{Reference}
+    Yoav Goldberg, Neural Network Methods for Natural Language Processing.
+    Part II, Chapter 7.
+\end{observation}
+
+After discussing the different sources of information available for deriving features from natural language text, we will now explore examples of concrete NLP classification tasks, and suitable features for them.
+
+\section{Document classification}
+\subsection{Language identification}
+We are given a text and want to classify it into one of a fixed set of languages. Bag-of-letter-bigrams is a very strong feature representation for this task.
+
+\subsection{Topic classification}
+We are given a text and need to classify it into one of a predefined set of topics. If we do not have many training examples, it may be a good idea to consider lemmas or stems rather than entire words. When using BOW, the TF-IDF encoding is very powerful. However, a learning algorithm is often capable of coming up with the weighting on its own.
+
+\subsection{Authorship attribution}
+In the authorship attribution task, we are given a text and need to infer the identity of its author from a fixed set of possible authors, or other characteristics of the author of the text, such as their gender, their age, or their native language.
+
+The kind of information used to solve this task is very different from that of topic classification---the clues are subtle and involve stylistic properties of the text rather than content words. For this reason, we may want to adopt features that focus on the structure rather than the content. We can do so by considering POS and function words, namely words like \textit{on, of, before}, as well as pronouns to capture the author's style. A good approximation of function words is the top-300 most frequent words in a large corpus.
+
+\section{Word in context}
+\subsection{POS tagging}
+In the parts-of-speech tagging task, we are given a sentence and need to assign the correct part-of-speech to each word in the sentence. The POS tags belong to a predefined set; for this example, assume we will be using the tagset of the Universal Treebank Project (UTP, 2017), containing 17 tags.
+
+Part-of-speech tagging is usually modeled as a structured task---the tag of the first word may depend on the tag of the third one---but it can be approximated quite well by classifying each word in isolation into a POS-tag based on a window of two words to each side of the word. If we tag the words in a fixed order, for example from left to right, we can also condition each tagging prediction on tag predictions made on previous tags.
+
+\subsection{Named entity recognition}
+In the named-entity recognition (NER) task, we are given a document and need to find named entities such as Milan, John Smith, McCormik Industries, and Paris, as well as to categorize them into a predefined set of categories such as LOCATION, ORGANIZATION, PERSON, or OTHER.
+
+\begin{quote}
+\textit{Note that this task is context-dependent, as Milan can be a location (the city) or an organization (a sports team, ``Milan played against Barcelona Wednesday evening''), and Paris can be the name of a city or a person.}
+\end{quote}
+
+\begin{quote}
+\textit{Example: ``John Smith, president of McCormik Industries visited his niece Paris in Milan, reporters say.'' should produce the output: ``PER(John Smith), president of ORG(McCormik Industries) visited his niece PER(Paris) in LOC(Milan), reporters say.''}
+\end{quote}
+
+NER is usually modeled as a sequence tagging task like POS tagging. In particular, in NER, we use BIO-encoded tags: O (not part of a named entity), B-PER (first word of a person name), I-PER (continuation of a person name), B-LOC (first word of a location name), etc.
+
+\begin{quote}
+\textit{The example above should hence be tagged as ``John/B-PER Smith/I-PER ,/O president/O of/O McCormik/B-ORG ...''}
+\end{quote}
+
+So, given the analogies, the set of features for this task is quite similar to the POS tagging one.
+
+\subsection{Preposition sense disambiguation}
+Prepositions, words like \textit{on, in, with}, and \textit{for}, serve for connecting predicates with their arguments and nouns with their prepositional modifiers. Prepositions are very common and also very ambiguous. For example, consider the word ``for'': a) ``we went there for lunch''; b) ``he paid for me''; c) ``we ate for two hours''; d) ``he would have left for home, but it started raining''.
+
+In (a), ``for'' indicates purpose, in (b) a beneficiary, in (c) a duration, and in (d) a location. In order to fully understand the meaning of a sentence, one should arguably know the correct senses of the prepositions within it. The preposition-sense disambiguation task deals with assigning the correct sense to a preposition in context, from a finite inventory of senses.
+
+Linguists say that to understand a preposition, we must look at its verb (called governor) and its object. We could use some heuristics or a dependency parser or both.
+
+\section{Relation between two words in context}
+\subsection{Arc-factored parsing}
+In the dependency parsing task, we are given a sentence and need to return a syntactic dependency tree over it. Each word is assigned a parent word, except for the main word of the sentence whose parent is a special \texttt{*ROOT*} symbol.
+
+One approach to modeling the task is the arc-factored approach, where each of the possible $n^{2}$ word-word relations (arcs) is assigned a score independent of the others, and then we search for the valid tree with the maximal overall score. The score assignment is made by a trained scoring function \texttt{ARCSCORE($h$, $m$, sentence)}, receiving a sentence as well as the indices $h$ and $m$ of two words within it that are considered as candidates for attachment ($h$ is the index of the candidate head-word and $m$ is the index of the candidate modifier).
+
+As features, we should use words and their POS tags. One could replace words with their embeddings. Another useful feature is the signed distance ($|h - m|$) between the head and the modifier.

@@ -1,0 +1,82 @@
+\chapter{Language Modeling}
+
+\begin{observation}{Reference}
+    Yoav Goldberg, Neural Network Methods for Natural Language Processing.
+    Part II, Chapter 9.
+\end{observation}
+
+Language modeling is the task of assigning a probability to sentences in a language. Besides that, the language models also assign a probability to a given word (or sequence of words) to follow a sequence of words.
+
+\begin{example}{}
+A language model answers to questions like:
+\begin{enumerate}
+    \item what is the probability of seeing the word 'barking' after 'the dog is'?
+    \item what is the probability of seeing the sentence 'the dog is barking'?
+\end{enumerate}
+As we will see in a moment, these two questions require the same quantity of information.
+\end{example}
+
+Formally, given a sequence of words $w_{1:n}$, we want to estimate $\Pr(w_{1:n})$, that is
+$$
+\Pr(w_{1:n}) = \Pr(w_{1})\Pr(w_{2}|w_{1})\dots \Pr(w_{n}|w_{1:n-1})
+$$
+
+\begin{observation}{Note}
+Note that calculating $\Pr(w_{n}|w_{1:n-1})$ is as complex as calculating $\Pr(w_{1:n})$. In fact, according to the definition of conditioned probability,
+$$
+\Pr(w_{n}|w_{1:n-1}) = \frac{\Pr(w_{n})}{\Pr(w_{1:n})}
+$$
+In words, calculating the likelihood of the last word given the preceding ones is not easier than calculating the likelihood of the entire sentence.
+\end{observation}
+
+For this reason, many language models in the past make use of the $k$-th order Markov assumption, that is
+$$
+\Pr(w_{i}|w_{1:i-1}) = \Pr(w_{i}|w_{i-k:i-1})
+$$
+At this point, the probability of the sentence becomes
+$$
+\Pr(w_{1:n}) = \prod_{i=1}^{n}\Pr(w_{i}|w_{i-k:i-1})
+$$
+with $\set{w_{-k}, w_{-k+1},\dots, w_{0}}$ being special padding symbols. Our task is then to accurately estimate $\Pr(w_{i+1}|w_{i})$ given large amounts of text.
+
+\section{Perplexity}
+Even though language models are typically evaluated on the downstream task, there is an intrinsic metric called \textbf{perplexity} that indicates how much the language model is confident on sequences of a given corpus. Let $LM$ be the language model and a text corpus of $n$ words, then perplexity is defined as:
+$$
+2^{-\frac{1}{n}\sum_{i=1}^{n}\log LM(w_{i}|w_{1:i-1})}
+$$
+Good language models will have a low score of perplexity.
+
+\begin{observation}{Note}
+Perplexities are corpus-specific. If you want to compare two LMs, you must do it on the same corpus.
+\end{observation}
+
+\section{Traditional models}
+The traditional LM approach assumes a $k$-th order Markov assumption and tries to find good estimates $\hat{p}(w_{i+1}=m|w_{i-k:i})$. Let $\#(w_{i:j})$ be the count of the sequence $w_{i:j}$ inside the text corpus. It can be proven that the maximum likelihood estimate (MLE) of $\hat{p}(w_{i+1}=m|w_{i-k:i})$ is
+$$
+\hat{p}_{\text{MLE}}(w_{i+1}=m|w_{i-k:i}) = \frac{\#(w_{i-k:i+1})}{\#(w_{i-k:i})}
+$$
+A big downside of this approach is that if any sequence $w_{i-k:i+1}$ is never encountered in the corpus (i.e., its count is zero), then the estimate is zero on the entire corpus (since the probability of a sentence is calculated via the chain rule), and the perplexity is infinite. To avoid this, we can use smoothing techniques that ensure a non-null probability for every single sequence or else use a totally different approach like neural models.
+
+\section{Neural models}
+A simple model was presented by Bengio (2003) and is based on a feed-forward neural network. The network is fed with a $k$-gram, representing a context window, $\mathbf{x} = (v(w_{1}); v(w_{2}) \dots; v(w_{k}))$, where $v(w_{i})$ is the embedding of word $w_{i}$, and outputs a probability distribution $\mathbf{y}$ over the entire vocabulary $V$.
+
+The distribution vector $\mathbf{y}$ is obtained by applying a softmax layer. The component $y_{i}$ of maximum value will represent the next most probable word. The vocabulary $V$ also contains special symbols like \texttt{UNK}, \texttt{<s>} (start symbol), \texttt{</s>} (end symbol).
+
+\textbf{The training is unsupervised} (actually, automatically supervised) since the dataset contains all $k$-grams whose target is the subsequent word. The loss function is cross-entropy.
+
+Concerning performance and complexity, enlarging the window from $k$ to $k+l$ is linear in the number of parameters, which is a modest increase compared to the polynomial increase in traditional, count-based models. However, the biggest limitation is the cost of the softmax layer, which for large vocabularies can be prohibitive. A good review and comparison of the techniques that try to solve this limitation is available in Chen et al. (2016, \url{http://aclweb.org/anthology/P16-1186}).
+
+Putting aside the prohibitive cost of using the large output vocabulary, the model has very appealing properties. It achieves better perplexities than state-of-the-art traditional language models such as Kneser-Ney smoothed models and can scale to much larger orders.
+
+\section{Using language models for generation}
+Once we have trained a language model, we can generate new sentences by letting it predict the next words. Note that picking the most probable word at each step might result in a globally less probable sentence, while using \textbf{beam search} might lead to a more probable one.
+
+\begin{observation}{Beam search}
+Instead of only keeping the single best candidate (greedy search) or all possible candidates (exhaustive search) at each step, beam search keeps track of the top-$k$ most probable partial sequences (called hypotheses) at each step. Start with an empty sequence (or a start token, e.g., \texttt{<s>}). At each step:
+\begin{enumerate}
+    \item For each of the $k$ best partial sequences, generate new sequences by appending each possible next word and calculate the score.
+    \item Keep only the top-$k$ sequences with the highest scores.
+    \item Repeat until a stopping condition is met (e.g., reaching a maximum length or generating an end token, e.g., \texttt{</s>}).
+\end{enumerate}
+Finally, return the highest-scoring complete sequence from the remaining candidates.
+\end{observation}
