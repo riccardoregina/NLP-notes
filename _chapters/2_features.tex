@@ -1,11 +1,11 @@
 \chapter{Features}
 
-\begin{observation}{Reference}
-    Yoav Goldberg, Neural Network Methods for Natural Language Processing.
+\begin{note}{Reference}
+    Yoav Goldberg, Neural Network Methods for Natural Language Processing.\cite{goldberg2017neural}
     Part II, Chapter 6.
-\end{observation}
+\end{note}
 
-In language processing, feature vectors $\mathbf{x}$ are derived from textual data, in order to reflect various linguistic properties of the text. This process of derivation is called \textbf{feature extraction} and is done by a feature function $f$.
+In language processing, feature vectors $\mathbf{x}$ are derived from textual data, in order to reflect various linguistic properties of the text. This process of derivation is called \keyword{feature extraction} and is done by a feature function $f$.
 
 Deciding on the right features is a fundamental part of a successful machine learning project. \textbf{While deep learning alleviates a lot of the need for feature engineering, a set of core features still needs to be defined.}
 
@@ -20,12 +20,12 @@ In NLP, there are several types of classification problems, each depending on th
     \item \textbf{Relation Between Two Words}: We are given two words or phrases within a larger context and need to determine something about the relations between them.
 \end{itemize}
 
-\begin{quote}
-    \textbf{Definition:} A \textbf{word} is the smallest unit of meaning, e.g., \textit{New York}, \textit{forgets}. In general, we distinguish between words and tokens. A \textbf{token} is the output of a tokenizer and can be a single word, multiple words, or part of a word. However, we will often use \textit{word} and \textit{token} as synonyms.
-\end{quote}
+\begin{definition}{}
+    A \keyword{word} is the smallest unit of meaning, e.g., \textit{New York}, \textit{forgets}. In general, we distinguish between words and tokens. A \keyword{token} is the output of a tokenizer and can be a single word, multiple words, or part of a word. However, we will often use \textit{word} and \textit{token} as synonyms.
+\end{definition}
 
 \section{Features for NLP}
-As words and letters are discrete items, features in NLP often take the form of indicators or counts. An \textbf{indicator feature} takes a value $0$ or $1$ depending on the existence of a condition (e.g., the word \textit{dog} is present). A \textbf{count} takes a value depending on the number of occurrences of some event (e.g., the word \textit{dog} appears 20 times in the document).
+As words and letters are discrete items, features in NLP often take the form of indicators or counts. An \keyword{indicator feature} takes a value $0$ or $1$ depending on the existence of a condition (e.g., the word \textit{dog} is present). A \keyword{count} takes a value depending on the number of occurrences of some event (e.g., the word \textit{dog} appears 20 times in the document).
 
 \subsection{Directly Observable Properties}
 We list some properties that we can observe directly from the input, depending on the input type.
@@ -53,7 +53,7 @@ When dealing with a text, we typically count its words and look at their order.
 When considering a word within a sentence, phrase, or document, the directly observable features of the word are its position and the words or letters surrounding it. Words closer to the target tend to be more informative, but distant words may also influence the target (e.g., in Latin, verbs are typically at the end of a phrase, far from the subject).
 
 \begin{itemize}
-    \item \textbf{Windows}: It is common to focus on the immediate context of a word by considering a \textbf{window} surrounding it, i.e., $k$ words on each side, where typical values for $k$ are $2, 5, 10$. A window can be seen as a smaller bag of words. Since it is smaller, we may also consider the positions of words within it, which can provide useful information. We take the identity of words as features, e.g., for \textit{the brown fox \textbf{jumped} over the lazy dog}, the set of features is $\{w_{-2}=\text{brown}, w_{-1}=\text{fox}, w_{+1}=\text{over}, w_{+2}=\text{the}\}$.
+    \item \textbf{Windows}: It is common to focus on the immediate context of a word by considering a \keyword{window} surrounding it, i.e., $k$ words on each side, where typical values for $k$ are $2, 5, 10$. A window can be seen as a smaller bag of words. Since it is smaller, we may also consider the positions of words within it, which can provide useful information. \textbf{We take the identity of words as features}, e.g., for \textit{the brown fox \textbf{jumped} over the lazy dog}, the set of features is $\{w_{-2}=\text{brown}, w_{-1}=\text{fox}, w_{+1}=\text{over}, w_{+2}=\text{the}\}$.
 
     \item \textbf{Position}: Besides the context of the word, we may be interested in its absolute position within a sentence.
 \end{itemize}
@@ -85,9 +85,14 @@ However, linear models cannot assign a score to a conjunction of events that is 
 Neural networks do not suffer from this problem. If we use neural networks, we can specify only the core features and rely on the network's non-linearity. However, in some cases, neural networks do not surpass linear models with hand-crafted features.
 
 \subsection{Ngrams}
-A special case of feature combination is \textbf{ngrams}, consecutive word sequences of length $n$. A bag-of-bigrams representation is more powerful than bag-of-words because it can capture bigrams like \textit{New York} or \textit{not good}.
+A special case of feature combination is \keyword{ngrams}, consecutive word sequences of length $n$. A bag-of-bigrams representation is more powerful than bag-of-words because it can capture bigrams like \textit{New York} or \textit{not good}.
 
-A priori, it is hard to know the optimal value for $n$. The common solution is to include all ngrams up to a given length and let the model's regularization discard the less interesting ones by assigning them very low weights.
+A priori, it is hard to know the optimal value for $n$. The common solution is to consider all ngrams of a given length \(n\) and let the model's regularization discard the less interesting ones by assigning them very low weights.
+
+\begin{note}{Regularization}
+    Regularization is a technique used to penalize large weights in a model, thereby encouraging to assign zero weight to irrelevant features and incrementing the weight value to very important features only.
+    This is done by adding a penalty term to the loss function proportional to the absolute value of a weight (\(L_1\) regularization) or its squared value (\(L_2\) regularization) or both (ElasticNet).
+\end{note}
 
 However, a multi-layer perceptron (MLP) fed with a BOW input vector cannot infer ngram features on its own because a BOW vector does not provide positional information, and vanilla MLPs do not capture positional patterns.
 
@@ -96,11 +101,11 @@ To provide positional information, we can feed our MLP with an input vector that
 More specialized neural network architectures, such as \textbf{convolutional networks} and \textbf{recurrent networks}, are designed to find informative ngram features from sequences of words of varying lengths.
 
 \subsection{Distributional Features}
-Until now, our treatment of words has been as discrete and unrelated symbols: the words \textit{pizza}, \textit{burger}, and \textit{chair} are equally similar (and dissimilar) to each other. We achieved some generalization by considering POS, lemmas, stems, dictionaries, and lexical resources like WordNet, but these solutions are limited. They either provide very coarse-grained distinctions or rely on specific, manually compiled dictionaries.
+Until now, words has been treated as discrete and unrelated symbols: the words \textit{pizza}, \textit{burger}, and \textit{chair} are equally similar (and dissimilar) to each other. We achieved some generalization by considering POS, lemmas, stems, dictionaries, and lexical resources like WordNet, but these solutions are limited. They either provide very coarse-grained distinctions or rely on specific, manually compiled dictionaries.
 
 Unless we have a specialized list of foods, we will not learn that \textit{pizza} is more similar to \textit{burger} than to \textit{chair}, and it will be even harder to learn that \textit{pizza} is more similar to \textit{burger} than to \textit{ice cream}.
 
-The \textbf{distributional hypothesis of language} states that the meaning of a word can be inferred from the contexts in which it is used. By observing co-occurrence patterns of words across a large body of text, we can discover that the contexts in which \textit{burger} occurs are similar to those in which \textit{pizza} occurs, less similar to those in which \textit{ice cream} occurs, and very different from those in which \textit{chair} occurs.
+The \keyword{distributional hypothesis of language} states that the meaning of a word can be inferred from the contexts in which it is used. By observing co-occurrence patterns of words across a large body of text, we can discover that the contexts in which \textit{burger} occurs are similar to those in which \textit{pizza} occurs, less similar to those in which \textit{ice cream} occurs, and very different from those in which \textit{chair} occurs.
 
 Many algorithms have been developed over the years to leverage this property, learning generalizations of words based on their contexts. These can be broadly categorized into:
 \begin{itemize}

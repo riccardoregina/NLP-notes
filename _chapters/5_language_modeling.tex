@@ -1,19 +1,19 @@
 \chapter{Language Modeling}
 
-\begin{observation}{Reference}
-    Yoav Goldberg, Neural Network Methods for Natural Language Processing.
+\begin{note}{Reference}
+    Yoav Goldberg, Neural Network Methods for Natural Language Processing.\cite{goldberg2017neural}
     Part II, Chapter 9.
-\end{observation}
+\end{note}
 
 Language modeling is the task of assigning a probability to sentences in a language. Besides that, the language models also assign a probability to a given word (or sequence of words) to follow a sequence of words.
 
 \begin{example}{}
-A language model answers to questions like:
-\begin{enumerate}
-    \item what is the probability of seeing the word 'barking' after 'the dog is'?
-    \item what is the probability of seeing the sentence 'the dog is barking'?
-\end{enumerate}
-As we will see in a moment, these two questions require the same quantity of information.
+    A language model answers to questions like:
+    \begin{enumerate}
+        \item what is the probability of seeing the word 'barking' after 'the dog is'?
+        \item what is the probability of seeing the sentence 'the dog is barking'?
+    \end{enumerate}
+    As we will see in a moment, these two questions require the same quantity of information.
 \end{example}
 
 Formally, given a sequence of words $w_{1:n}$, we want to estimate $\Pr(w_{1:n})$, that is
@@ -21,12 +21,12 @@ $$
 \Pr(w_{1:n}) = \Pr(w_{1})\Pr(w_{2}|w_{1})\dots \Pr(w_{n}|w_{1:n-1})
 $$
 
-\begin{observation}{Note}
-Note that calculating $\Pr(w_{n}|w_{1:n-1})$ is as complex as calculating $\Pr(w_{1:n})$. In fact, according to the definition of conditioned probability,
-$$
-\Pr(w_{n}|w_{1:n-1}) = \frac{\Pr(w_{n})}{\Pr(w_{1:n})}
-$$
-In words, calculating the likelihood of the last word given the preceding ones is not easier than calculating the likelihood of the entire sentence.
+\begin{observation}{}
+    Note that calculating $\Pr(w_{n}|w_{1:n-1})$ is as complex as calculating $\Pr(w_{1:n})$. In fact, according to the definition of conditioned probability,
+    $$
+    \Pr(w_{n}|w_{1:n-1}) = \frac{\Pr(w_{n})}{\Pr(w_{1:n})}
+    $$
+    In words, calculating the likelihood of the last word given the preceding ones is not easier than calculating the likelihood of the entire sentence.
 \end{observation}
 
 For this reason, many language models in the past make use of the $k$-th order Markov assumption, that is
@@ -46,9 +46,10 @@ $$
 $$
 Good language models will have a low score of perplexity.
 
-\begin{observation}{Note}
-Perplexities are corpus-specific. If you want to compare two LMs, you must do it on the same corpus.
-\end{observation}
+\begin{note}{}
+    Perplexities are corpus-specific. If you want to compare two LMs, you must do it on the same corpus.
+    However, most research teams that produce state-of-the-art language models do not share their training sets (usually due to legal reasons).
+\end{note}
 
 \section{Traditional models}
 The traditional LM approach assumes a $k$-th order Markov assumption and tries to find good estimates $\hat{p}(w_{i+1}=m|w_{i-k:i})$. Let $\#(w_{i:j})$ be the count of the sequence $w_{i:j}$ inside the text corpus. It can be proven that the maximum likelihood estimate (MLE) of $\hat{p}(w_{i+1}=m|w_{i-k:i})$ is
@@ -62,7 +63,7 @@ A simple model was presented by Bengio (2003) and is based on a feed-forward neu
 
 The distribution vector $\mathbf{y}$ is obtained by applying a softmax layer. The component $y_{i}$ of maximum value will represent the next most probable word. The vocabulary $V$ also contains special symbols like \texttt{UNK}, \texttt{<s>} (start symbol), \texttt{</s>} (end symbol).
 
-\textbf{The training is unsupervised} (actually, automatically supervised) since the dataset contains all $k$-grams whose target is the subsequent word. The loss function is cross-entropy.
+\textbf{Training is self-supervised} since the dataset contains all $k$-grams whose target is the subsequent word. The loss function is cross-entropy.
 
 Concerning performance and complexity, enlarging the window from $k$ to $k+l$ is linear in the number of parameters, which is a modest increase compared to the polynomial increase in traditional, count-based models. However, the biggest limitation is the cost of the softmax layer, which for large vocabularies can be prohibitive. A good review and comparison of the techniques that try to solve this limitation is available in Chen et al. (2016, \url{http://aclweb.org/anthology/P16-1186}).
 

@@ -1,14 +1,14 @@
 \chapter{Pre-trained Word Representation}
 
-\begin{observation}{Reference}
-    Yoav Goldberg, Neural Network Methods for Natural Language Processing.
-    Part II, Chapter 10.
-\end{observation}
-
 In this chapter, we will see how to construct word embeddings.
 
+\begin{note}{Reference}
+    Yoav Goldberg, Neural Network Methods for Natural Language Processing.\cite{goldberg2017neural}
+    Part II, Chapter 10 and 11.
+\end{note}
 If we are interested in task A, for which we have only a very limited amount of labeled data, but there is an auxiliary task B for which we have much more labeled data, we may want to pre-train our word embeddings on task B and then use them for training task A.
-The common case is that we do not have an auxiliary task with large enough amounts of annotated data (or maybe we want to help bootstrap the auxiliary task training with better vectors). In such cases, we resort to ``unsupervised'' (automatic labeling) auxiliary tasks, which can be trained on huge amounts of unannotated text.
+
+The common case is that we do not have an auxiliary task with large enough amounts of annotated data (or maybe we want to help bootstrap the auxiliary task training with better vectors). In such cases, we resort to \textbf{self-supervised} auxiliary tasks, which can be trained on huge amounts of unannotated text.
 
 All the algorithms to find word embeddings are based on the \textit{distributional hypothesis}.
 
@@ -19,7 +19,8 @@ In this way, each word is represented as a sparse vector in high-dimensional spa
 
 Formally, each entry of $\mathbf{M}$ is defined as $\mathbf{M}_{i,j}^{f}=f(w_{i},c_{j})$, where $f$ is an association measure of the strength between the word $w_{i}\in V_{W}$ and the context $c_{j} \in V_{C}$, where $V_{W}$ and $V_{C}$ are, respectively, the set of words and the set of contexts.
 
-There are two main approaches to construct embeddings: the distributional approach and the distributed one. The first is based on frequencies, while the second involves training a neural network. Even though they may be different at first glance, they are equivalent, i.e., they give interchangeable outputs.
+\textbf{There are two main approaches to construct embeddings: the distributional approach and the distributed one.} 
+The first is based on frequencies, while the second involves training a neural network. Even though they may be different at first glance, they are equivalent, i.e., they give interchangeable outputs.
 
 \section{Similarity measures}
 Different distance functions can be used to measure the distances between word vectors, which are taken to represent the semantic distances between the associated words. A common and effective measure is the \textbf{cosine similarity}, which measures the angle between two vectors:
@@ -31,8 +32,7 @@ Another popular measure is the \textbf{generalized Jaccard similarity}, defined 
 \text{sim}_{\text{Jaccard}}(u,v)=\frac{\sum_{i}\min(u_{i}, v_{i})}{\sum_{i}\max(u_{i}, v_{i})}
 \]
 
-\section{Distributional approach}
-\section{Word-context weighting}
+\section{Distributional approach: Word-context weighting}
 The function $f$ is usually based on counts from a large text corpus. Let $\#(w,c)$ be the occurrences of the word $w$ in the context $c$ in the corpus $D$, and let
 \[
 |D|=\sum_{\substack{w\in V_{W}\\c\in V_{C}}}\#(w,c)
@@ -43,7 +43,7 @@ At first, one could think to define $f(w,c)$ to be $f(w,c)=\#(w,c)$ or a normali
 
 To solve this, we have to assign higher weights to a word-context pair involving a context that co-occurs more with the given word than with other words.
 
-\begin{note}
+\begin{note}{}
 This kind of approach is very similar to the one used in TF-IDF.
 \end{note}
 
@@ -60,16 +60,18 @@ This function has a side effect: it assigns high values to rare events. For exam
 
 A potential obstacle to representing words as the explicit set of contexts in which they appear is that of data sparsity and high dimensionality. The former can lead to incorrect values of $f(w,c)$ because we did not observe enough data points, while the latter can lead to performance issues.
 
-To alleviate both problems, we can perform a dimensionality reduction technique such as the \textbf{singular value decomposition} (SVD), which factorizes the matrix $\mathbf{M}$ into two narrow matrices $\mathbf{W}\in \mathbb{R}^{|V_{W}|\times d}$, the word matrix, and $\mathbf{C}\in \mathbb{R}^{|V_{C}|\times d}$, the context matrix, such that $\mathbf{W}\mathbf{C}^{T}=\mathbf{M}'$ where $\mathbf{M}'$ is the matrix with $\text{rank}(\mathbf{M}')=d$ that is closest, in terms of $L_{2}$, to $\mathbf{M}$.
+To alleviate both problems, we can perform a dimensionality reduction technique such as the \textbf{singular value decomposition} (SVD), which factorizes the matrix $\mathbf{M}$ into two narrow matrices $\mathbf{W}\in \mathbb{R}^{|V_{W}|\times d}$, the word matrix, and $\mathbf{C}\in \mathbb{R}^{|V_{C}|\times d}$, the context matrix, such that $\mathbf{W}\mathbf{C}^{T}=\mathbf{M}'$ where $\mathbf{M}'$ is the matrix with $\text{rank}(\mathbf{M}')=d$ that is closer, in terms of $L_{2}$, to $\mathbf{M}$.
 
 We can see $\mathbf{M}'$ as a smoothed version of $\mathbf{M}$: based on robust patterns in the data, some of the measurements are ``fixed,'' e.g., words are added to contexts that they were not seen with if other words in this context seem to co-locate with each other.
 
 Moreover, the matrix $\mathbf{W}$ allows us to represent each word as a dense $d$-dimensional vector, where $d \ll |V_{C}|$ (typical values are $50 < d < 300$). As we already said, this allows generalization: operations between word vectors will preserve semantic meaning.
 
 \section{Distributed representations}
-Unlike the above distributional representations, in which each dimension corresponds to a specific context the word occurs in, the dimensions in the distributed representation are not interpretable, and specific dimensions do not necessarily correspond to specific concepts.
+Unlike distributional representations, in which each dimension corresponds to a specific context the word occurs in (unless SVD is applied), the dimensions in the distributed representation are not interpretable, and specific dimensions do not necessarily correspond to specific concepts.
 
 The distributed nature of the representation means that a given aspect of meaning may be captured by (distributed over) a combination of many dimensions, and that a given dimension may contribute to capturing several aspects of meaning.
+
+Note that these characteristics are equally achieved by applying SVD to a distributional representation.
 
 \section{Collobert and Weston}
 A neural network for language modeling must output a distribution of words given the context. This requires a softmax layer, whose cost may be prohibitive for large vocabularies.
@@ -80,16 +82,26 @@ Another constraint for language modeling is that we must be able to apply the ch
 
 The network is fed with an input vector $\mathbf{x}=(v_{c}(c_{1});\dots;v_{c}(c_{k});v_{w}(w))$, where $v_{c}$ and $v_{w}$ are, respectively, the context embedding function and the word embedding function. Both functions map a word to a $d_{emb}$-dimensional vector.
 
-Then, the output is calculated:
+Then, the output score is calculated:
 \[
-s(w, c_{1:k})=\mathbf{y}=g(\mathbf{x}\mathbf{U})\cdot \mathbf{v}
+\begin{aligned}
+s(w, c_{1:k})&=z \\
+z&=\mathbf{y} \cdot \mathbf{v} \\
+\mathbf{y}&=g(\mathbf{x}\mathbf{U})
+\end{aligned}
 \]
+where \(\mathbf{U}\) is the weight matrix of the hidden layer and \(\mathbf{v}\) is the global scoring vector, also a vector of weights.
 
 The network is trained with a margin-based loss to score correct word-context pairs $(w, c_{1:k})$ over incorrect ones $(w', c_{1:k})$ with a margin of at least $1$. The loss is defined as:
 \[
 L(w, c_{1:k}, w')=\max\{0, 1 - (s(w,c_{1:k}) - s(w', c_{1:k}))\}
 \]
 where $w'$ is a random word sampled from the vocabulary: at each step, the training algorithm selects a word-context pair $(w, c_{1:k})$, samples a random $w'$, calculates the loss, and updates the weights $\mathbf{U}$, $\mathbf{v}$, and the word and context embeddings to minimize the loss.
+
+When \(s(w,c_{1:k}) - s(w', c_{1:k}) \geq 1\), the loss is \(0\) and so the model is correctly assigning a high score to the correct pair and a low one to the wrong one.
+On the other hand, when \(s(w,c_{1:k}) - s(w', c_{1:k}) < 1\), the loss is positive because the model is assigning similar scores to both the correct and incorrect pairs.
+
+By maximizing the margin between different couples, we enforce the distributional law (words with similar contexts will have similar embeddings) while avoiding calculating softmax on huge embedding sets.
 
 \section{Word2Vec}
 Other word-embedding algorithms are CBOW and Skip-Gram, presented by Mikolov et al. in the Word2Vec suite.
@@ -122,8 +134,8 @@ so that we have:
 \Pr(D=1|w,c)=\frac{1}{1+e^{-(w\cdot c)}}
 \]
 
-\begin{note}
-This method is called CBOW because it adds up the context word embeddings into a single context vector, as one would do with BOW sparse vectors. Since we are instead working with continuous dense embedding vectors, this method is called Continuous BOW.
+\begin{note}{}
+    This method is called CBOW because it adds up the context word embeddings into a single context vector, as one would do with BOW sparse vectors. Since we are instead working with continuous dense embedding vectors, this method is called Continuous BOW.
 \end{note}
 
 This variant decouples the context words from their positions: adding the context vectors discards positional information.
@@ -142,16 +154,16 @@ The distributional hypothesis leads to very interesting results but comes with s
     \item \textbf{Antonyms}. Words that are the opposite of each other (antonyms) tend to appear in the same context. For example, something that is \textit{cold} may also be \textit{hot}. A distributional method may represent antonyms as very similar vectors.
 \end{itemize}
 
-\section{Word embeddings outside neural networks (Chapter 11)}
+\section{Word embeddings outside neural networks}
 Besides neural networks, word embeddings can be used for several useful tasks, all of them based on word similarity:
 \begin{itemize}
-    \item \textbf{$k$-most-similar words}. Once we have embeddings (say) in a matrix $\mathbf{E}$ such that $\mathbf{E}_{i}=\mathbf{w_{i}}$ is the embedding of the $i$-th word, we can calculate a vector of similarities $\mathbf{s}=\mathbf{E}\mathbf{w}^{T}$.
+    \item \textbf{$k$-most-similar words}. Once we have embeddings (say) in a matrix $\mathbf{E}$ such that $\mathbf{E}_{i}=\mathbf{w}_{i}$ is the embedding of the $i$-th word, we can calculate a vector of similarities $\mathbf{s}=\mathbf{E}\mathbf{w}^{T}_{i}$ which tells us how much the vector \(\mathbf{w}_{i}\) is similar to all the other ones.
     \item \textbf{Word clustering}. Having word embeddings allows us to apply clustering algorithms and hence relate similar concepts.
     \item \textbf{Extend a group}. Say we have a group of words that we want to extend (e.g., a group of first names). We can calculate the average word embedding between them and take the $k$-most-similar words to extend the group.
     \item \textbf{Odd one out}. Similarly, say we have a group of words and want to find the one that does not belong to it. We can once again calculate the average word embedding and discard the most distant word embedding of the group.
     \item \textbf{Word analogies}. As already mentioned, word embeddings allow us to elegantly solve word analogies, e.g., \textit{Paris:France=X:Italy}, with simple linear algebra, that is $\mathbf{w}_{\text{Paris}}-\mathbf{w}_{\text{France}}+\mathbf{w}_{\text{Italy}}\sim \mathbf{w}_{\text{Rome}}$.
 \end{itemize}
 
-\begin{note}
-We are assuming that the word similarity is calculated as cosine similarity between the word embeddings.
+\begin{note}{}
+    We are assuming that the word similarity is calculated as cosine similarity between the word embeddings.
 \end{note}

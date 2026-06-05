@@ -1,11 +1,9 @@
 \chapter{Inputs}
 
-\begin{observation}{Reference}
-    Yoav Goldberg, Neural Network Methods for Natural Language Processing.
+\begin{note}{Reference}
+    Yoav Goldberg, Neural Network Methods for Natural Language Processing.\cite{goldberg2017neural}
     Part II, Chapter 8.
-\end{observation}
-
-\section{Features Encoding for Neural Networks}
+\end{note}
 
 Features must be designed with the downstream task in mind, but once we have them, how should we encode them into an input to feed a network?
 
@@ -15,24 +13,26 @@ In linear models of the form
 it is common to think in terms of indicator functions and assign a unique dimension for each possible feature.
 For example, when considering a bag-of-words representation over a vocabulary of \( 40{,}000 \) items, \(\mathbf{x}\) will be a sparse vector with \( 40{,}000 \) components, where the non-null components represent the words contained in the input text.
 
-\begin{quote}
-    \textbf{Note:} Let's consider that \(\mathbf{x}\) contains a window of five words.
-\end{quote}
-
-If we want to give positional information, \(\mathbf{x}\) must be a concatenation of \(5\) input vectors, each with \(39{,}999\) zero-valued components and only one one-valued component, corresponding to the index of the word. This leads \(\mathbf{x}\) to be \(200{,}000\)-dimensional. In this way, the weight vector would also be \(200{,}000\)-dimensional.
-
 In general, to represent a feature in a one-hot encoding fashion, we must create a vector of dimension \(d\), where every component is zero-valued except one, corresponding to the index of the feature value among the \(d\) possible values.
+
+Now, let's consider that \(\mathbf{x}\) contains a window of five words.
+If we want to give positional information, \(\mathbf{x}\) must be a concatenation of \(5\) input vectors. 
+In other words, a window will be expressed by a concatenation \(\mathbf{x}:=[\mathbf{w}_{-2}; \mathbf{w}_{-1}; \mathbf{w}_{0}; \mathbf{w}_{+1}; \mathbf{w}_{+2}]\) where each word vector \(\mathbf{w} \in \mathbb{R}^{40{,}000}\) will have a single non-null component and all zeroes i.e. \(\mathbf{w}_{i}=(0,\ldots,0,1,0,\ldots,0)\).
+This leads \(\mathbf{x}\) to be \(200{,}000\)-dimensional. 
+In this way, the weight vector would also be \(200{,}000\)-dimensional and this will cause our neural network to face a huge computational workload.
 
 \section{Feature embeddings}
 The biggest conceptual jump when moving from sparse-input linear models to deeper nonlinear models is to stop representing each feature as a unique dimension in a one-hot representation and instead represent them as \textbf{dense vectors}. That is, each core feature is embedded into a \(d\)-dimensional space and represented as a vector in that space. The dimension \(d\) is usually much smaller than the number of features. For example, each item in a vocabulary of \(40{,}000\) items can be represented as a \(100\) or \(200\)-dimensional vector rather than a \(40{,}000\)-dimensional one-hot encoded vector.
 
-The embeddings are treated as parameters of the network and are trained like the other parameters of the function to learn. The general structure for an NLP classification system based on a feed-forward neural network is:
+The embeddings are treated as parameters of the network and are trained like the other parameters of the function to learn. The general structure of a ML approach for building an NLP classification system based on a feed-forward neural network is:
 \begin{enumerate}
     \item Extract a set of core features \( f_{1}, \dots, f_{k} \) that are relevant for predicting the output class.
     \item For each feature \( f_{i} \), retrieve the corresponding vector \( v(f_{i}) \).
     \item Combine the vectors (either by concatenation, summation, or a combination of both) into an input vector \(\mathbf{x}\).
     \item Feed \(\mathbf{x}\) into a nonlinear classifier (feed-forward neural network).
 \end{enumerate}
+
+For example, in the previous section, we used concatenation.
 
 \section{A comparison}
 One-hot encoded input vectors have very high dimensionality, and their components are independent, while input vectors built on embeddings have low dimensionality, and their components do have relations.
@@ -72,16 +72,18 @@ to give more importance to the words adjacent to the target. If we \textit{do} c
 \end{note}
 
 \subsection{Variable number of features: continuous bag of words}
-Feed-forward networks assume a fixed-dimensional input. However, in some cases, the number of features is not known in advance (e.g., in document classification, each word in the sentence may be a feature). We thus need to represent an unbounded number of features using a fixed-size vector. One way to achieve this is through a \textbf{continuous bag of words (CBOW)} representation: we average or weight-average the embeddings.
+Feed-forward networks assume a fixed-dimensional input. However, in some cases, the number of features is not known in advance (e.g., in document classification, each word in the sentence may be a feature). We thus need to represent an unbounded number of features using a fixed-size vector. One way to achieve this is through a \textbf{continuous bag of words (CBOW)} representation: we average or weight-average the embeddings, but we will discuss this in detail later.
 
 \section{Last but not least}
 \subsection{Padding}
 In some cases, your feature extractor will look for things that do not exist. For example, when working with parse trees, you may have a feature looking for the left-most dependent of a given word, but the word may not have any dependents to its left. Perhaps you are looking at the word two positions to the right of the current one, but you are at the end of the sequence, and two positions to the right is past the end.
 
-What should be done in such situations? When using a bag-of-features approach (i.e., summing), you could leave the feature out of the sum. When using concatenation, you may provide a zero-vector in its place. These two approaches work fine technically but could be sub-optimal for your problem domain. Maybe knowing that there is no left-modifier is informative? The suggested solution is to add a special symbol (padding symbol) to your embedding vocabulary and use the associated padding vector in these cases. Depending on the problem, you may want to use different padding vectors for different situations (e.g., no-left-modifier may use a different vector than no-right-modifier). Such paddings are important for good prediction performance and are commonly used. Unfortunately, their use is not often reported or is quickly glossed over in many research papers.
+What should be done in such situations? When using a bag-of-features approach (i.e., summing), you could leave the feature out of the sum. When using concatenation, you may provide a zero-vector in its place. These two approaches work fine technically but could be sub-optimal for your problem domain. Maybe knowing that there is no left-modifier is informative? The suggested solution is to add a special symbol (\textbf{padding symbol}) to your embedding vocabulary and use the associated padding vector in these cases. Depending on the problem, you may want to use different padding vectors for different situations (e.g., no-left-modifier may use a different vector than no-right-modifier). Such paddings are important for good prediction performance and are commonly used. Unfortunately, their use is not often reported or is quickly glossed over in many research papers.
 
 \subsection{Unknown words}
-Another case where a requested feature vector will not be available is for out-of-vocabulary (OOV) items. You are looking for the word on the left, observe the value \textit{variational}, but this word was not part of your training vocabulary, so you don’t have an embedding vector for it. This case is different from the padding case because the item is there, but you just don’t know it. The solution is similar: reserve a special symbol, \texttt{UNK}, representing an unknown token, for use in such cases. Again, you may or may not want to use different unknown symbols for different vocabularies. In any case, it is advised not to share the padding and the unknown vectors, as they reflect two very different conditions.
+Another case where a requested feature vector will not be available is for out-of-vocabulary (OOV) items. You are looking for the word on the left, observe the value \textit{variational}, but this word was not part of your training vocabulary, so you don’t have an embedding vector for it. This case is different from the padding case because the item is there, but you just don’t know it. 
+
+The solution is similar: reserve a special symbol, \texttt{UNK}, representing an unknown token, for use in such cases. Again, you may or may not want to use different unknown symbols for different vocabularies. In any case, it is advised not to share the padding and the unknown vectors, as they reflect two very different conditions.
 
 Instead of denoting all unknown words as \texttt{UNK}, we could use a more clever annotation that distinguishes very different words. For example, if the unknown word terminates with \textit{-ed}, we could assign it a \texttt{*ed} symbol; if it is a number, we could assign it \texttt{NUM}, etc. While there are ways to learn these symbols during training, this is often overkill, and it is simpler to handcraft them. This practice is often used but rarely mentioned in research papers.
 
@@ -89,7 +91,12 @@ What if, during training, the model never encounters an unknown word? In this ca
 \[
 \frac{\alpha}{\alpha + \#w},
 \]
-where \(\#w\) is the frequency of the word \(w\) in the training set. Besides better adaptation to unknown words, word dropout may also be beneficial for preventing overfitting and improving robustness by not letting the model rely too much on any single word being present. When used this way, word dropout should be applied frequently, even to frequent words. However, when dropout is used like this, not all dropped words should be replaced as \texttt{UNK}, because this pattern is very unlikely to happen in test scenarios.
+where \(\#w\) is the frequency of the word \(w\) in the training set. This formula will cause rare words to be dropped out more frequently and \(\alpha\) controls the average tendency of dropping words independently from their frequency.
+In fact, the more is \(\alpha\) the more the formula approaches \(1\).
+
+Besides better adaptation to unknown words, word dropout may also be beneficial for preventing overfitting and improving robustness by not letting the model rely too much on any single word being present. When used this way (as the common dropout technique in neural networks for model averaging), word dropout should be applied frequently, even to frequent words. 
+However, when dropout is used like this, not all dropped words should be replaced as \texttt{UNK}, because this pattern is very unlikely to happen in test scenarios.
+Instead, one should consider to both replace dropped words with typos or similar words and with \texttt{UNK}.
 
 \subsection{Shared vectors}
 Consider a case where you have a few features that share the same vocabulary. For example, when assigning a part-of-speech to a given word, the input has some features like the previous and the next word. Suppose these two are the same word. Should we share the two representative vectors? If we believe that these words may have slightly different meanings in different positions, then the answer is no. Otherwise, we could save memory, but this is true empiricism.
@@ -98,4 +105,7 @@ Consider a case where you have a few features that share the same vocabulary. Fo
 How big should an embedding be? In current research (2017), the dimensionality of word-embedding vectors ranges between about 50 to a few hundred, and in some extreme cases, thousands. Since the dimensionality of the vectors has a direct effect on memory requirements and processing time, a good rule of thumb is to experiment with a few different sizes and choose a good trade-off between speed and task accuracy.
 
 \subsection{Finite vocabulary}
-What does it mean to associate an embedding vector for every word? Clearly, we cannot associate one with all possible values and need to restrict ourselves to every value from a finite vocabulary. This vocabulary is usually based on the training set or, if we use pre-trained embeddings, on the training set on which the pre-trained embeddings were trained. It is recommended that the vocabulary also include a designated \texttt{UNK} symbol, associating a special vector to all words that are not in the vocabulary.
+Clearly, we cannot associate one with all possible words (language evolves constantly) and so we need to restrict ourselves to a finite vocabulary. 
+This vocabulary is usually based on the training set or, if we use pre-trained embeddings, on the training set on which the pre-trained embeddings were trained. 
+It is recommended that the vocabulary also include a designated \texttt{UNK} symbol, associating a special vector to all words that are not in the vocabulary.
+This allows to work with a reasonable complex dictionary.
