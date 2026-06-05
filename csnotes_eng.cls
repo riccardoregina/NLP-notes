@@ -22,7 +22,7 @@
 % Encoding and language
 \RequirePackage[utf8]{inputenc}
 \RequirePackage[T1]{fontenc}
-\RequirePackage[english,italian]{babel}
+\RequirePackage[english]{babel}
 \RequirePackage[italian]{datetime2}
 
 % Mathematics
@@ -220,38 +220,38 @@
 % =============================================================================
 % CLEVER-REFERENCE NAMES CONFIGURATION
 % =============================================================================
-\crefname{theorem}{teorema}{teoremi}
-\Crefname{theorem}{Teorema}{Teoremi}
-\crefname{corollary}{corollario}{corollari}
-\Crefname{corollary}{Corollario}{Corollari}
-\crefname{lemma}{lemma}{lemmi}
-\Crefname{lemma}{Lemma}{Lemmi}
-\crefname{proposition}{proposizione}{proposizioni}
-\Crefname{proposition}{Proposizione}{Proposizioni}
-\crefname{definition}{definizione}{definizioni}
-\Crefname{definition}{Definizione}{Definizioni}
-\crefname{example}{esempio}{esempi}
-\Crefname{example}{Esempio}{Esempi}
-\crefname{note}{nota}{note}
-\Crefname{note}{Nota}{Note}
-\crefname{observation}{osservazione}{osservazioni}
-\Crefname{observation}{Osservazione}{Osservazioni}
-\crefname{warning}{attenzione}{attenzioni}
-\Crefname{warning}{Attenzione}{Attenzioni}
-\crefname{algorithm}{algoritmo}{algoritmi}
-\Crefname{algorithm}{Algoritmo}{Algoritmi}
-\crefname{chapter}{capitolo}{capitoli}
-\Crefname{chapter}{Capitolo}{Capitoli}
-\crefname{section}{sezione}{sezioni}
-\Crefname{section}{Sezione}{Sezioni}
-\crefname{subsection}{sottosezione}{sottosezioni}
-\Crefname{subsection}{Sottosezione}{Sottosezioni}
-\crefname{figure}{figura}{figure}
-\Crefname{figure}{Figura}{Figure}
-\crefname{table}{tabella}{tabelle}
-\Crefname{table}{Tabella}{Tabelle}
-\crefname{equation}{equazione}{equazioni}
-\Crefname{equation}{Equazione}{Equazioni}
+\crefname{theorem}{theorem}{theorems}
+\Crefname{theorem}{Theorem}{Theorems}
+\crefname{corollary}{corollary}{corollaries}
+\Crefname{corollary}{Corollary}{Corollaries}
+\crefname{lemma}{lemma}{lemmas}
+\Crefname{lemma}{Lemma}{Lemmas}
+\crefname{proposition}{proposition}{propositions}
+\Crefname{proposition}{Proposition}{Propositions}
+\crefname{definition}{definition}{definitions}
+\Crefname{definition}{Definition}{Definitions}
+\crefname{example}{example}{examples}
+\Crefname{example}{Example}{Examples}
+\crefname{note}{note}{notes}
+\Crefname{note}{Note}{Notes}
+\crefname{observation}{observation}{observations}
+\Crefname{observation}{Observation}{Observations}
+\crefname{warning}{warning}{warnings}
+\Crefname{warning}{Warning}{Warnings}
+\crefname{algorithm}{algorithm}{algorithms}
+\Crefname{algorithm}{Algorithm}{Algorithms}
+\crefname{chapter}{chapter}{chapters}
+\Crefname{chapter}{Chapter}{Chapters}
+\crefname{section}{section}{sections}
+\Crefname{section}{Section}{Sections}
+\crefname{subsection}{subsection}{subsections}
+\Crefname{subsection}{Subsection}{Subsections}
+\crefname{figure}{figure}{figures}
+\Crefname{figure}{Figure}{Figures}
+\crefname{table}{table}{tables}
+\Crefname{table}{Table}{Tables}
+\crefname{equation}{equation}{equations}
+\Crefname{equation}{Equation}{Equations}
 
 
 \newcommand{\crefalt}[2][black]{{\hypersetup{linkcolor={#1}}\cref{#2}}}
@@ -264,7 +264,7 @@
 % Abstract customization
 % By default use an Italian descriptive title instead of the English "Abstract".
 % Users can override with \setabstracttitle{...}
-\newcommand{\abstracttitle}{Scopo del documento}
+\newcommand{\abstracttitle}{Purpose of the Document}
 \newcommand{\setabstracttitle}[1]{\renewcommand{\abstracttitle}{#1}}
 
 \renewenvironment{abstract}
@@ -399,7 +399,7 @@
 % Definition environment
 \newtcolorbox[auto counter, number within=section]{definition}[2][]{
     theorembox=defcolor,
-    title={Definizione~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
+    title={Definition~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
     label type=definition,
     #1
 }
@@ -407,7 +407,7 @@
 % Theorem environment
 \newtcolorbox[auto counter, number within=section]{theorem}[2][]{
     theorembox=thmcolor,
-    title={Teorema~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
+    title={Theorem~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
     label type=theorem,
     #1
 }
@@ -423,7 +423,7 @@
 % Proposition environment
 \newtcolorbox[auto counter, number within=section]{proposition}[2][]{
     theorembox=propcolor,
-    title={Proposizione~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
+    title={Proposition~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
     label type=proposition,
     #1
 }
@@ -431,7 +431,7 @@
 % Corollary environment
 \newtcolorbox[auto counter, number within=section]{corollary}[2][]{
     theorembox=corcolor,
-    title={Corollario~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
+    title={Corollary~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
     label type=corollary,
     #1
 }
@@ -439,7 +439,7 @@
 % Example environment
 \newtcolorbox[auto counter, number within=section]{example}[2][]{
     theorembox=excolor,
-    title={Esempio~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
+    title={Example~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
     label type=example,
     #1
 }  
@@ -447,7 +447,7 @@
 % Note environment
 \newtcolorbox[auto counter, number within=section]{note}[2][]{
     theoremboxwhite=notecolor,
-    title={\infosymbol{}  Nota~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
+    title={\infosymbol{}  Note~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
     label type=note,
     #1
 }
@@ -455,7 +455,7 @@
 % Observation environment
 \newtcolorbox[auto counter, number within=section]{observation}[2][]{
     theorembox=notecolor,
-    title={Osservazione~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
+    title={Observation~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
     label type=observation,
     #1
 }
@@ -463,7 +463,7 @@
 % Warning/Alert environment
 \newtcolorbox[auto counter, number within=section]{warning}[2][]{
     theorembox=warncolor,
-    title={Attenzione~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
+    title={Attention~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
     label type=warning,
     #1
 }
@@ -471,12 +471,12 @@
 % Algorithm environment
 \newtcolorbox[auto counter, number within=section]{algorithmdesc}[2][]{
     theorembox=algocolor,
-    title={Algoritmo~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
+    title={Algorithm~\thetcbcounter\ifstrempty{#2}{}{:~#2}},
     label type=algorithm,
     #1
 }
 % Customized proof environment
-\renewenvironment{proof}[1][Dimostrazione]
+\renewenvironment{proof}[1][Proof]
   {\par\vspace{10pt}\noindent\textbf{\color{csblue}#1.}\ \itshape\phantomsection}
   {\hfill$\square$\par\vspace{10pt}}
 
@@ -518,11 +518,11 @@
 % =============================================================================
 
 % Variables for the title page
-\newcommand{\@university}{Università degli Studi}
-\newcommand{\@department}{Dipartimento di Informatica}
-\newcommand{\@course}{Corso di Laurea Magistrale}
-\newcommand{\@subject}{Informatica}
-\newcommand{\@academicyear}{Anno Accademico 2024/2025}
+\newcommand{\@university}{University of Naples Federico II}
+\newcommand{\@department}{Department of Electrical Engineering and Information Technology}
+\newcommand{\@course}{Master's Degree in Computer Science}
+\newcommand{\@subject}{Computer Science}
+\newcommand{\@academicyear}{Academic Year 2024/2025}
 
 \newcommand{\university}[1]{\renewcommand{\@university}{#1}}
 \newcommand{\department}[1]{\renewcommand{\@department}{#1}}
@@ -571,7 +571,7 @@
         \hspace*{5.5cm} 
         \begin{minipage}[t]{\dimexpr\textwidth-5.5cm\relax}
             \begin{flushleft}
-                {\Large Appunti del corso di}\\[0.5cm]
+                {\Large Notes for}\\[0.5cm]
                 {\Huge\bfseries\color{black!80}\@subject}\\[0.2cm]
                 
                 \vspace{0.1cm}
@@ -591,7 +591,7 @@
             \begin{minipage}{0.4\linewidth}
                 \begin{flushleft}
                     \large
-                    \textbf{Studenti:}\\
+                    \textbf{Students:}\\
                     \@author
                 \end{flushleft}
             \end{minipage}
@@ -600,7 +600,7 @@
             \begin{minipage}{0.4\linewidth}
                 \begin{flushright}
                     \large
-                    \textbf{Data:}\\
+                    \textbf{Date:}\\
                     \@date
                 \end{flushright}
             \end{minipage}
@@ -651,14 +651,14 @@
             % - Informazioni di contatto
             % - O lasciare vuoto per una pagina pulita
             
-            {\large\textit{Fine degli appunti}}
+            {\large\textit{End of Notes}}
             
             \vspace{2cm}
             
             {\normalsize
-            Questi appunti sono stati redatti durante\\
-            l'anno accademico \@academicyear\\[1cm]
-            presso \@university
+            These notes were written during\\
+            the \@academicyear\\[1cm]
+            at \@university
             }
             
             \vfill
