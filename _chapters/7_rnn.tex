@@ -1,16 +1,16 @@
 \chapter{Recurrent Neural Networks}
 
-\begin{observation}{Reference}
-    Yoav Goldberg, Neural Network Methods for Natural Language Processing.
+\begin{note}{Reference}
+    Yoav Goldberg, Neural Network Methods for Natural Language Processing.\cite{goldberg2017neural}
     Part III, Chapters 13-17.
-\end{observation}
+\end{note}
 
-The main problem of vanilla feed-forward neural networks is that they do not consider hierarchical patterns and positions, instead treating each input component as independent. Moreover, these networks allow only a fixed size for the input, not allowing a variable length. Convolutional Neural Networks (CNNs) capture word order of the context, yet limited to local patterns and hence does not relate words that are far apart in the input sequence. CNNs also allow a fixed size input. Recurrent Neural Networks (RNNs) allow representing arbitrarily sized sequential inputs in fixed-size vectors, while capturing structural patterns in the input.
+The main problem of vanilla feed-forward neural networks is that they do not consider hierarchical patterns and positions, instead treating each input component as independent. Moreover, these networks allow only a fixed size for the input, not allowing a variable length. Convolutional Neural Networks (CNNs) capture word order of the context, yet limited to local patterns and hence do not relate words that are far apart in the input sequence. CNNs also allow a fixed size input. Recurrent Neural Networks (RNNs) allow representing arbitrarily sized sequential inputs in fixed-size vectors, while capturing structural patterns in the input.
 
 We will see RNNs as an abstraction: an interface for translating a sequence of inputs into a fixed sized output, that can then be plugged as components in larger networks.
 
 \begin{note}{CNNs}
-    Convolutional networks have been discussed in detail in another course. Here, we give just a note about naming. Since CNNs did arise from the computer vision setting, its concepts are recall images rather than linear sequences like text. However, these concepts can be well ported from 2D to 1D. For example, while it is common knowledge that images are made up of three channels (RGB), it can be not obvious for text. However, text can absolutely have different channels, such as the sequence of words, the sequence of the relative POS tags etc.
+    Convolutional networks have been discussed in detail in another course. Here, we give just a note about naming. Since CNNs did arise from the computer vision setting, its concepts recall images rather than linear sequences like text. However, these concepts can be well ported from 2D to 1D. For example, while it is common knowledge that images are made up of three channels (RGB), it can be not obvious for text. However, text can absolutely have different channels, such as the sequence of words, the sequence of the relative POS tags etc.
 \end{note}
 
 \section{The RNN abstraction}
@@ -66,7 +66,7 @@ or using another combination of the local losses such as average or weighted ave
 A very natural use-case of the transduction setup is for language modeling, in which a sequence of words $\mathbf{x}_{1:i}$ is used to predict a distribution over the $(i+1)$-th word. RNN-based language models provide vastly better perplexities than traditional language models, as already mentioned.
 
 \section{Bi-directional RNNs (biRNNs)}
-A RNN allows to condition the word $\mathbf{x}_{i}$ on the entire preceding word sequence $\mathbf{x}_{1:i-1}$. However, we have seen that also the following words $\mathbf{x}_{i+1:n}$ can be useful for prediction.
+A RNN allows to condition the word $\mathbf{x}_{i}$ on the entire preceding word sequence $\mathbf{x}_{1:i-1}$. However, considering also the following words $\mathbf{x}_{i+1:n}$ can be useful for prediction.
 
 To do this, we use two RNNs: a forward RNN and a backward one. The forward $\text{RNN}(R^f, O^f)$ is fed with the word sequence $\mathbf{x}_{1:n}$ while the backward $\text{RNN}(R^b, O^b)$ with the reversed sequence $\mathbf{x}_{n:1}$. The two RNNs maintain, respectively, a forward state $\mathbf{s}^f_{i}$ and a backward state $\mathbf{s}^{b}_{i}$.
 At each step, the two RNNs calculate, respectively, $\mathbf{y}^f_{i}=O^f(\mathbf{s}^f_{i})$ and $\mathbf{y}^b_{i}=O^b(\mathbf{s}^b_{i})$. The output of the $\text{biRNN}$ is the concatenation of the two output vectors. So,
@@ -81,11 +81,11 @@ At each step, the two RNNs calculate, respectively, $\mathbf{y}^f_{i}=O^f(\mathb
 \section{Multi-layer (stacked) RNNs}
 Since a RNN is a feature extractor, we can stack $k$ RNNs to extract "more features".
 
-\begin{note}
+\begin{note}{}
 While it is not theoretically clear what is the additional power gained by the deeper architecture of stacked RNNs, it was observed empirically that they work better than shallower ones on some tasks.
 \end{note}
 
-In a multi-layer RNN, $k$ RNNs are stack one on top of another so that the first RNN will take as input the sequence $\mathbf{x}_{1:n}$, the second RNN will take as input the output sequence of the first RNN and so on.
+In a multi-layer RNN, $k$ RNNs are stacked one on top of another so that the first RNN will take as input the sequence $\mathbf{x}_{1:n}$, the second RNN will take as input the output sequence of the first RNN and so on.
 
 \begin{observation}{}
 biRNNs can be stacked in a similar fashion.
@@ -109,9 +109,9 @@ Another variant, introduced by Jordan, makes $\mathbf{s}_{i}$ dependent directly
 \subsection{Gated architectures}
 S-RNNs are difficult to train because of vanishing gradients: early input signals do not reach the final output because of the chain of products between $\mathbf{x}_{i}$ and $\mathbf{W}$. This is both a numerical limitation and a functional limitation: null gradients make it difficult to minimize the loss function and early signals that get lost in the process limit the conditioning window of the model.
 
-To avoid this, we must find a way to preserve early input signals that are crucial. At the moment, the state vector $\mathbf{s}_{i}$ gets overwritten, without control, during the compute of $\mathbf{s}_{i+1}=R(\mathbf{s}_{i};\mathbf{x}_{i+1})$. We must therefore control this state update.
+To avoid this, we must find a way to preserve early input signals that are crucial. At the moment, the state vector $\mathbf{s}_{i}$ gets overwritten, without control, during the computation of $\mathbf{s}_{i+1}=R(\mathbf{s}_{i};\mathbf{x}_{i+1})$. We must therefore control this state update.
 
-We can achieve this by introducing an access gate vector $\mathbf{g}\in\{0,1\}^{d_{in}}$ s.t. $R$ can only modify the state vector components $s_{j}$ s.t. $g_{j}=1$. We can implement this with a simple element-wise multiplication, also called hadamard-product:
+We can achieve this by introducing an access gate vector $\mathbf{g}\in\{0,1\}^{d_{in}}$ s.t. $R$ can only modify the state vector components $s_{j}$ when $g_{j}=1$. We can implement this with a simple element-wise multiplication, also called hadamard-product:
 \[
 \mathbf{s}_{i+1}=\mathbf{x}_{i+1}\odot\mathbf{g} + \mathbf{s}_{i}\odot (1-\mathbf{g})
 \]
@@ -179,7 +179,7 @@ In this setting, we have a source sequence $\mathbf{x}_{1:n}$ and we are interes
 
 The encoder and decoder are trained jointly and the supervision happens only for the decoder, but the gradients are propagated back to the encoder and the parameters of both are updated.
 
-\begin{note}
+\begin{note}{}
 Contexts may also be non-text. In fact, it is usual to use the encoder-decoder framework for image captioning: an image is encoded by, say, a convolutional network into the vector $\mathbf{c}$, that is then used as the context for a conditioned text generator.
 \end{note}
 
@@ -196,14 +196,14 @@ followed by an attention mechanism and then a RNN-based conditioned generator as
 \[
 \begin{aligned}
 \Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:j},\mathbf{x}_{1:n})&=f(O(\mathbf{s}_{j+1})) \\
-\mathbf{s}_{j+1}&=R(\mathbf{s}_{j}, [\hat{\mathbf{t}}_{j};\mathbf{c}^j]) \\
-\mathbf{c}^j&=\text{attend}(\mathbf{c}_{1:n}, \hat{\mathbf{t}}_{1:j}) \\
+\mathbf{s}_{j+1}&=R(\mathbf{s}_{j}, [\hat{\mathbf{t}}_{j};\mathbf{c}_j]) \\
+\mathbf{c}_j&=\text{attend}(\mathbf{c}_{1:n}, \hat{\mathbf{t}}_{1:j}) \\
 \hat{\mathbf{t}}_{j} &\sim \Pr(\mathbf{t}_{j}|\hat{\mathbf{t}}_{1:j-1}, \mathbf{x}_{1:n})
 \end{aligned}
 \]
 
-\begin{note}
-We write $\Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:j},\mathbf{x}_{1:n})$ and not $\Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:j},\mathbf{c}^{j})$, as one would naturally write according to the formal definition of a RNN-based conditioned generator, because this probability already depends on the attentioned context $\mathbf{c}^j$ in the step of calculating the new state vector $\mathbf{s}_{j+1}$.
+\begin{note}{}
+We write $\Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:j},\mathbf{x}_{1:n})$ and not $\Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:j},\mathbf{c}_{j})$, as one would naturally write according to the formal definition of a RNN-based conditioned generator, because this probability already depends on the attentioned context $\mathbf{c}_j$ in the step of calculating the new state vector $\mathbf{s}_{j+1}$.
 \end{note}
 
 Finally, using an attention mechanism allows us to interpret the model encodings by just inspecting the relative parameters.
