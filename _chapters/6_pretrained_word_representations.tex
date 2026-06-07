@@ -7,6 +7,7 @@ In this chapter, we will see how to construct word embeddings.
     Part II, Chapter 10 and 11.
 \end{note}
 If we are interested in task A, for which we have only a very limited amount of labeled data, but there is an auxiliary task B for which we have much more labeled data, we may want to pre-train our word embeddings on task B and then use them for training task A.
+This technique is called \keyword{transfer learning} and the pre-trained model is called \keyword{foundation model}.
 
 The common case is that we do not have an auxiliary task with large enough amounts of annotated data (or maybe we want to help bootstrap the auxiliary task training with better vectors). In such cases, we resort to \textbf{self-supervised} auxiliary tasks, which can be trained on huge amounts of unannotated text.
 
