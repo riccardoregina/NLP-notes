@@ -170,6 +170,13 @@ We would like the positional encoding to give each feature a unique position in 
 
 One might then think of uniformly assigning each feature a unique value in the interval $(0, 1)$, but since the assignment of these values depends on the length of the token sequence, sequences of different lengths would have different positional values, and thus the positional values would not be consistent across different sequences.
 
+\begin{figure}[h]
+    \centering
+    \caption{Positional encoding visualization: On the horizontal axis is the feature position (index $i$), and on the vertical axis is the token position (index $n$). The wave giving position to the features has an increasingly longer wavelength as index $i$ increases. The positional encoding vector $\mathbf{r}_n$ corresponds to the intersection points with the gray line at the bottom. These intersection points are the components of $\mathbf{r}_n$.}
+    \label{fig:positional_encoding}
+    \includegraphics[width=0.4\textwidth]{_files/_images/positional_encoding}
+\end{figure}
+
 A possible encoding that satisfies these properties is the one proposed in the paper \textit{Attention is All You Need} (2017):
 \[
 \mathbf{r}_{ni}=\begin{cases}
@@ -183,9 +190,125 @@ where $L$ is a constant. This encoding ensures positional values in the range $(
     Both index $i$ and index $n$ start from 1. Otherwise, for $n = 0$, the same values would be obtained for each feature, and for $i = 0$, there would be a discontinuity in the $\sin$ graph.
 \end{note}
 
-\begin{figure}[h]
-    \centering
-    \caption{Positional encoding visualization: On the horizontal axis is the feature position (index $i$), and on the vertical axis is the token position (index $n$). The wave giving position to the features has an increasingly longer wavelength as index $i$ increases. The positional encoding vector $\mathbf{r}_n$ corresponds to the intersection points with the gray line at the bottom. These intersection points are the components of $\mathbf{r}_n$.}
-    \label{fig:positional_encoding}
-    \includegraphics[width=0.6\textwidth]{_files/_images/positional_encoding}
-\end{figure}
+\section{Decoder-only Transformers: GPT}
+Decoder-only transformers can be used as generative models that create output sequences of tokens.
+We will take the GPT architecture as an example.
+
+The GPT architecture consists of a stack of transformer layers that, given an input sequence \(\mathbf{x}_{1:N}\), produces an output sequence \(\tilde{\mathbf{x}}_{1:N}\). Both the input and output tokens are \(D\)-dimensional.
+Each output \(\tilde{\mathbf{x}}_{i}\) needs to be a probability distribution over the token dictionary, of size \(K\).
+For this reason, the following transformation is applied:
+\[
+\mathbf{Y}=\text{Softmax}\left(\tilde{\mathbf{X}}\mathbf{W}^{(p)}\right),\; \mathbf{W}^{(p)}\in \mathbb{R}^{D\times K}.
+\]
+Each
+
+\subsection{Training}
+Given a large corpus, multiple training sequences are defined and are assumed i.i.d. Each training sequence is a token sequence \(\mathbf{x}_{1:N}\) with a target token \(\mathbf{x}_{N+1}\).
+Each training sequence gets a score based on cross-entropy loss and, since they are all assumed i.i.d., the overall loss of the training is the sum of cross-entropies across the data set.
+
+A great benefit of tranformer-based language models is their training efficiency.
+Naively, we could train the model on a single training sequence at time.
+However, a token \(\mathbf{x}_i\) can be used both as an input token for subsequent tokens and as a target for preceding tokens.
+However, to process these in parallel we have to ensure that the network is not able to \q{cheat} by looking ahead in the sequence, otherwise it will simply learn to copy the next input directly to the output.
+
+To address this problem we do two things. 
+First, we shift the input sequence to the right by one step, so that input \(\mathbf{x}_n\) corresponds to output \(\mathbf{y}_{n+1}\), with target \(\mathbf{y}_{n+1}\), and an additional special token denoted \texttt{<start>} is prepended in the first position of the input sequence. 
+Second, note that the only computational step in which tokens interact with each other is the attention layer.
+We therefore introduce \keyword{masked attention}, sometimes called causal attention, into each of the attention layers, in which we set to zero all of the attention weights that correspond to a token attending to any later token in the sequence. 
+This simply involves setting to zero all the corresponding elements of the attention matrix \(\text{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V})\) and then normalizing the remaining elements so that each row once again sums to one. 
+In practice, this can be achieved by setting the corresponding pre-activation values to \(-\infty\) so that the softmax evaluates to zero for the associated outputs and also takes care of the normalization across the non-zero outputs.
+
+Since we want to exploit the massive parallelization capability of modern GPUs, we may stack up together multiple training sequences in a tensor.
+However, since sequences can be of different lenghts, we add some padding via the \texttt{<pad>} special token.
+Finally, an additional mask is then used in the attention weights to ensure that the output vectors do not pay attention to any inputs occupied by the \texttt{<pad>} token.
+
+\subsection{Inference}
+The output of the trained model is a probability distribution over the token dictionary, which represents the probability of the next token given the current token sequence. 
+Once this next word is chosen, the token sequence with the new token included can then be fed through the model again to generate the subsequent token in the sequence, and this process can be repeated indefinitely or until an end-of-sequence token is generated. 
+
+This may appear to be quite inefficient since data must be fed through the whole model for each new generated token. 
+However, note that due to the masked attention, the embedding learned for a particular token depends only on that token itself and on earlier tokens and hence does not change when a new, later token is generated. 
+Consequently, much of the computation can be reused when processing a new token.
+
+We have already introduced the problem of how should we sample the next token from the calculated distribution, mentioning the greedy technique, exhaustive search and beam search.
+Beam search was a fair trade-off between the first two approaches: the model calculates \(B\), the beam width, sentences simultaneously and finally picks the most probable one.
+Beam search is linear.
+
+However, for Large Language Models, this is quite costly, since even calculating a single output sequence is very expensive.
+Moreover, beam search results in low language diversity, namely it leads to much too obvious sentences.
+
+For these reasons, different, cheaper approaches such as top-K sampling and variants have been proposed.
+
+\begin{note}{}
+    To guarantee diversity, one could just randomly sample the next token.
+    However, this approach would often result in non-sensical outputs.
+\end{note}
+
+In top-K sampling, the next token is sampled among the K tokens that are most probable.
+Top-p sampling (also known as \emph{nucleus sampling}) calculates the cumulative probability of most probable tokens until a threshold is reached. Then, the next token is sampled from this restricted set.
+A more versatile version of top-K sampling introduces a parameter \(T\), called \keyword{temperature}, into the definition of the softmax function:
+\[
+y_i = \frac{\exp(a_i / T)}{\sum_{j}\exp(a_j / T)}.
+\]
+When \(T=0\), the probability mass is concentrated in the most probable token, resulting in greedy selection.
+When \(T=1\), the distribution is unaltered.
+When \(T\) approaches \(\infty\), the distribution becomes uniform.
+By choosing a value in \((0,1)\), the probability is concentrated towards the higher values.
+
+\section{Encoder-only Transformers: BERT}
+An encoder takes a token sequence as input and produces a fixed-size output vector, which can be used to solve downstream tasks (transfer learning).
+An example of transformer-based encoder is BERT (Bidirectional Encoder Representations from Transformers), which is a pre-trained model that is then fine-tuned on the downstream task.
+
+\subsection{Pre-Training}
+Training usually involves a huge text corpus, from which several training sequences \(\mathbf{x}_{1:N}\) are generated.
+A special \texttt{<class>} token is prepended to the training sequence. This token will be useful during fine-tuning and will be the connection between BERT and the final network component.
+The \texttt{<class>} token is ignored during training. Tokens of the training sequence are replaced with a \texttt{<mask>} token with a probability of, say, \(15\%\).
+
+The model is trained to predict a masked token \(\mathbf{x}_i\) at the corresponding output \(\mathbf{y}_i\).
+
+\begin{note}{}
+    This masking technique has been already faced in the previous chapters.
+\end{note}
+
+\subsection{Fine-tuning}
+During fine-tuning, an additional neural network is connected to the \texttt{<class>} node. For classification tasks, the overall network will have an output node for each class.
+The overall network is then trained on a domain-specific training set, much smaller than the pre-training data set.
+
+\begin{note}{}
+    Note that encoder models like BERT can be used in several kinds of tasks and not only in text generation.
+    For example, the output vector of BERT could be used to generate an image by a vision decoder.
+\end{note}
+
+\section{Sequence-to-sequence Transformers}
+Sequence-to-sequence models generate an output sequence from an input sequence.
+This is done by concatenating an encoder and a decoder and train the two together.
+A typical example of this is a translation model: the input sequence \(\mathbf{x}_{1:N}\) is encoded into an internal representation \(\mathbf{Z}\in \mathbb{R}^{N\times D}\) (where \(D\) is the embedding dimension), that is then decoded into the output sequence \(\mathbf{y}_{1:M}\).
+
+More precisely, the decoder is made up of \keyword{cross-attention} heads, instead of the already mentioned attention heads.
+A cross-attention head is defined as
+\[
+\mathbf{Y}=\text{CrossAttention}(\mathbf{Q},\mathbf{K},\mathbf{V})=\text{Softmax}\left[\frac{\mathbf{Q}\mathbf{K}^{T}}{\sqrt{D_{k}}}\right]\mathbf{V}
+\]
+and may look equal to the standard Attention head, but the difference is that here \(\mathbf{Q}\) is taken from the encoder output \(\mathbf{Z}\) while \(\mathbf{K},\mathbf{Q}\) are taken from the current decoder generation.
+
+\section{Low-Rank Adaptation}
+One very efficient approach to fine-tuning is called low-rank adaptation or LoRA.
+This approach is inspired by results which show that a trained over-parameterized model has a low intrinsic dimensionality with respect to fine-tuning, meaning that changes in the model parameters during fine-tuning lie on a subspace whose dimensionality is much smaller than the number of parameters of the network.
+LoRA exploits this by freezing the original model weights and adding additional matrices of learnable weights.
+Only attention-layer weights are modified.
+
+Consider a weight matrix \(\mathbf{W} \in \mathbb{R}^{D\times D}\) of an attention layer: it could be \(\mathbf{K},\mathbf{V}\) or \(\mathbf{Q}\).
+We introduce two weight matrices \(\mathbf{A} \in \mathbb{R}^{D \times R}\) and \(\mathbf{B} \in \mathbb{R}^{R \times D}\), that have indeed a low rank.
+
+During training, these two weight matrices are learned and the input matrix flows through the layer as
+\[
+\mathbf{Y} = \mathbf{X}\mathbf{W} + \mathbf{X}\mathbf{A}\mathbf{B}.
+\]
+
+After training, each of the attention-layer weight matrices are updated:
+\[
+\hat{\mathbf{W}} = \mathbf{W} + \mathbf{A}\mathbf{B}.
+\]
+
+So, inference time is not affected by this fine-tuning. 
+Moreover, learning the new weights has a cost of \(\BigO{2RD}\), that is really low compared to the cost of learning the original matrices, \(\BigO{D^2}\).
