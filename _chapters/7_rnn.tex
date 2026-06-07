@@ -207,3 +207,9 @@ We write $\Pr(\mathbf{t}_{i+1}=k|\hat{\mathbf{t}}_{1:j},\mathbf{x}_{1:n})$ and n
 \end{note}
 
 Finally, using an attention mechanism allows us to interpret the model encodings by just inspecting the relative parameters.
+
+\section{Beyond RNNs}
+RNNs have shown great ability in language modeling tasks.
+However, their computation steps grow linearly with the sequence length, meaning that producing a sequence of \(N\) words would require \(N\) computation steps.
+Moreover, because of their sequential nature of processing, they do not support parallel computation.
+Both these problems have been addressed by replacing RNNs with transformers.
