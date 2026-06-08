@@ -50,7 +50,10 @@ This mechanism allows to find out the most important tokens to attention when lo
 
     If the search engine returns a single \textit{value}, this is called \textbf{hard attention}, as the user pays a lot of attention to that single \textit{value}. If, instead, the engine returns multiple \textit{values}, this is called \textbf{soft attention}, as the user distributes their attention among the returned \textit{values}. If the individual attention levels are continuous, differentiable, and trainable variables, then gradient descent can be used.
 
-    We can view the token $\mathbf{x}_{i}$ as a \textit{value} and as its own \textit{key}. Then, we use the token $\mathbf{x}_{j}$ as a \textit{query} for the output token $\mathbf{y}_{j}$. In this way, to determine $\mathbf{y}_{j}$, we must compute the similarity between each token and $\mathbf{x}_{j}$, and thus the level of attention that $\mathbf{x}_{j}$ should pay to each of the tokens.
+    A token \(\mathbf{x}_i\) queries another token \(\mathbf{x}_{j}\) of its same sequence \(\mathbf{x}_{1:N}\) to obtain useful information to better understand its meaning, that will be contained in the output token \(\mathbf{y}_i\).
+    In this mechanism, the query is \(\mathbf{x}_i\) itself, while the key and the value are \(\mathbf{x}_j\).
+    This is repeated for each other token \(\mathbf{x}_j,j\neq i\), to produce the output token \(\mathbf{y}_i\), which is a context-enriched version of \(\mathbf{x}_i\).
+    Then, this process is repeated for each token token of the sequence, producing a sequence of output tokens \(\mathbf{y}_{1:N}\).
 
     This process is called \textbf{self-attention} because the same sequence is used to determine the \textit{queries}, \textit{keys}, and \textit{values}.
 \end{note}
@@ -67,7 +70,7 @@ a_{ij}=\frac{\exp(\mathbf{x}_i^{T}\mathbf{x}_{j})}{\sum_{j'=1}^{N}\exp (\mathbf{
 The architecture described so far can be defined as:
 \[
 \begin{aligned}
-\mathbf{Y} &= \mathbf{A}\mathbf{X}
+\mathbf{Y} &= \mathbf{A}\mathbf{X} \\
 \mathbf{A} &= \text{Softmax}\left[\mathbf{X}\mathbf{X}^{T}\right]
 \end{aligned}
 \]
@@ -81,7 +84,7 @@ Considering all tokens involved, we assign a weight matrix $\mathbf{U} \in \math
 Thus, the computation becomes:
 \[
 \begin{aligned}
-\mathbf{Y}&=\mathbf{A}\left(\mathbf{X}\mathbf{U}\right)
+\mathbf{Y}&=\mathbf{A}\left(\mathbf{X}\mathbf{U}\right) \\
 \mathbf{A}&=\text{Softmax}\left[\mathbf{X}\mathbf{U}\mathbf{U}^{T}\mathbf{X}^{T}\right]
 \end{aligned}
 \]
@@ -96,6 +99,10 @@ To introduce asymmetry, instead of using $\mathbf{U}$ as the weight matrix for \
 \mathbf{V}&=\mathbf{X}\mathbf{W}^{(v)},\:\mathbf{W}^{(v)} \in \mathbb{R}^{D \times D_v}
 \end{aligned}
 \]
+
+\begin{note}{Back to the metaphor}
+    Returning to the information retrieval metaphor, \(\mathbf{Q}\) will be trained to ask for the required informations, \(\mathbf{K}\) to expose the required informations, \(\mathbf{V}\) to retrieve the required informations.
+\end{note}
 
 In this way, the computation becomes:
 \[
@@ -284,12 +291,12 @@ Sequence-to-sequence models generate an output sequence from an input sequence.
 This is done by concatenating an encoder and a decoder and train the two together.
 A typical example of this is a translation model: the input sequence \(\mathbf{x}_{1:N}\) is encoded into an internal representation \(\mathbf{Z}\in \mathbb{R}^{N\times D}\) (where \(D\) is the embedding dimension), that is then decoded into the output sequence \(\mathbf{y}_{1:M}\).
 
-More precisely, the decoder is made up of \keyword{cross-attention} heads, instead of the already mentioned attention heads.
-A cross-attention head is defined as
+In addition to the self-attention layer, each attention head of the decoder also contains a \keyword{cross-attention} layer, that allows the decoder to retrieve useful information from the encoder output \(\mathbf{Z}\).
+A cross-attention layer is defined as
 \[
 \mathbf{Y}=\text{CrossAttention}(\mathbf{Q},\mathbf{K},\mathbf{V})=\text{Softmax}\left[\frac{\mathbf{Q}\mathbf{K}^{T}}{\sqrt{D_{k}}}\right]\mathbf{V}
 \]
-and may look equal to the standard Attention head, but the difference is that here \(\mathbf{Q}\) is taken from the encoder output \(\mathbf{Z}\) while \(\mathbf{K},\mathbf{Q}\) are taken from the current decoder generation.
+and may look equal to the standard attention layer, but the difference is that here \(\mathbf{Q}\) is taken from the currently produced decoder output  while \(\mathbf{K},\mathbf{V}\) are taken from the encoder output \(\mathbf{Z}\).
 
 \section{Low-Rank Adaptation}
 One very efficient approach to fine-tuning is called low-rank adaptation or LoRA.
