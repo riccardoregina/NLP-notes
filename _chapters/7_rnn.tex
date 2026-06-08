@@ -105,6 +105,7 @@ Presented by Elman (1990) and then further explored by Mikolov (2012), the S-RNN
 where $\mathbf{W}$ and $\mathbf{b}$ are learnable parameters.
 
 Another variant, introduced by Jordan, makes $\mathbf{s}_{i}$ dependent directly on the preceding output $\mathbf{y}_{i-1}$ rather than $\mathbf{s}_{i-1}$.
+In this case, the output passes through an additional layer with learnable parameters.
 
 \subsection{Gated architectures}
 S-RNNs are difficult to train because of vanishing gradients: early input signals do not reach the final output because of the chain of products between $\mathbf{x}_{i}$ and $\mathbf{W}$. This is both a numerical limitation and a functional limitation: null gradients make it difficult to minimize the loss function and early signals that get lost in the process limit the conditioning window of the model.
