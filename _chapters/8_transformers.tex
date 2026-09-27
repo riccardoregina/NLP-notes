@@ -106,10 +106,13 @@ To introduce asymmetry, instead of using $\mathbf{U}$ as the weight matrix for \
 
 In this way, the computation becomes:
 \[
-\mathbf{Y}=\text{Softmax}\left[\mathbf{Q}\mathbf{K}^{T}\right]\mathbf{V}
+\begin{aligned}
+    \mathbf{Y}&=\mathbf{A}\mathbf{V} \\
+    \mathbf{A}&=\text{Softmax}\left[\mathbf{Q}\mathbf{K}^{T}\right]
+\end{aligned}
 \]
 
-Given this structure, it is clear that $\mathbf{Q}$ and $\mathbf{K}$ must be compatible, as must $\mathbf{Q}\mathbf{K}^{T}$ and $\mathbf{V}$. To achieve this, it is necessary that $D_q = D_k$. Note also that it is $D_v$ that determines the size of $\mathbf{Y}$. Indeed, $\mathbf{Y} \in \mathbb{R}^{N \times D_v}$.
+Given this structure, it is clear that $\mathbf{Q}$ and $\mathbf{K}$ must be compatible, as must $\mathbf{A}$ and $\mathbf{V}$. To achieve this, it is necessary that $D_q = D_k$. Note also that it is $D_v$ that determines the size of $\mathbf{Y}$. Indeed, $\mathbf{Y} \in \mathbb{R}^{N \times D_v}$.
 
 \begin{figure}[h]
     \centering
